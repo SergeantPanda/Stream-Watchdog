@@ -33,12 +33,12 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 ## Configuration
 Update the following variables in the script to match your environment:
 
-- `SERVERURL`: Base URL of your StreamMaster server (e.g., `http://ubuntuserver:7098`).
+- `SERVERURL`: Base URL of your StreamMaster server (e.g., `http://localhost:7095`).
 - `FFMPEG_PATH`: Path to your `ffmpeg` executable.
 - `USER_AGENT`: Identifier used for the watchdog client.
 - `QUERY_INTERVAL`: Interval (in seconds) to query the API for stream updates.
-- `BUFFERING_THRESHOLD`: Speed threshold (default: `1.0x`) to detect buffering.
-- `BUFFERING_TIME_LIMIT`: Time (in seconds) to wait before switching streams when buffering.
+- `BUFFER_SPEED_THRESHOLD`: Speed threshold (default: `1.0x`) to detect buffering.
+- `BUFFER_TIME_THRESHOLD`: Time (in seconds) to wait before switching streams when buffering.
 
 ## Usage
 1. Start the script:
@@ -49,6 +49,25 @@ Update the following variables in the script to match your environment:
    - Periodically query the StreamMaster API for active streams.
    - Monitor each stream's speed using FFmpeg.
    - Switch to the next stream if buffering persists.
+
+## Docker Compose Example
+You can deploy Stream Master Watchdog using Docker Compose for easier setup and management.
+```yaml
+version: "3.8"
+services:
+  streammasterwatchdog:
+    image: sergeantpanda/streammasterwatchdog:latest
+    container_name: streammasterwatchdog
+    environment:
+      - SERVERURL=http://localhost:7095
+      - QUERY_INTERVAL=5
+      - USER_AGENT=Buffer Watchdog
+      - BUFFER_SPEED_THRESHOLD=1.0
+      - BUFFER_TIME_THRESHOLD=30
+    volumes:
+      - ./logs:/logs
+    restart: unless-stopped
+```
 
 ## API Integration
 The script uses the following StreamMaster APIs:
