@@ -21,8 +21,8 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 ## Installation
 1. Clone this repository:
    ```bash
-   git clone https://github.com/SergeantPanda/stream-master-watchdog.git
-   cd stream-master-watchdog
+   git clone https://github.com/SergeantPanda/StreamMaster-Watchdog.git
+   cd StreamMaster-Watchdog
    ```
 2. Install required Python dependencies:
    ```bash
