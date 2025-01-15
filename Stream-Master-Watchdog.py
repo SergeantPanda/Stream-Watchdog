@@ -2,18 +2,22 @@ import subprocess
 import requests
 import re
 import time
+import os
 from threading import Thread
 
 # Configuration
-SERVERURL = "http://ubuntuserver:7095"
+
+# Read environment variables
+SERVERURL = os.getenv("SERVERURL", "http://SERVERNAME:7095")  # Default value if not provided
+FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg")
+BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFERING_THRESHOLD", 1.0))  # Convert to float
+BUFFER_TIME_THRESHOLD = int(os.getenv("BUFFERING_TIME_LIMIT", 30))   # Convert to int
 API_URL = f"{SERVERURL}/api/statistics/getchannelmetrics"
 NEXT_STREAM_API_URL = f"{SERVERURL}/api/streaming/movetonextstream"
 STREAM_URL_TEMPLATE = f"{SERVERURL}/v/0/{{id}}"
-FFMPEG_PATH = r"C:\Users\df_he\Downloads\ffmpeg-6.1.1-essentials_build\bin\ffmpeg.exe"
 USER_AGENT = "Buffer Watchdog"
 QUERY_INTERVAL = 5  # Seconds, adjustable
-BUFFER_SPEED_THRESHOLD = 1  # Speed threshold for detecting buffering
-BUFFER_TIME_THRESHOLD = 30  # Seconds, adjustable
+
 
 # Maintain running processes, speeds, and buffering timers
 watchdog_processes = {}
