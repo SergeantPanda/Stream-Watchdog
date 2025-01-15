@@ -43,11 +43,13 @@ def get_running_streams():
         response = requests.get(API_URL, headers={"accept": "application/json"})
         response.raise_for_status()
         streams = response.json()
+        
         return [
             {
                 "id": stream.get("id") or stream.get("Id"),  # Handle both "id" and "Id"
                 "clients": [
-                    client.get("clientUserAgent", "") for client in stream.get("clientStreams", [])
+                    client.get("clientUserAgent") or client.get("ClientUserAgent", "") 
+                    for client in stream.get("clientStreams") or stream.get("ClientStreams", [])
                 ],
             }
             for stream in streams if not stream.get("isFailed", False)
@@ -55,7 +57,7 @@ def get_running_streams():
     except Exception as e:
         print(f"Error fetching streams: {e}")
         return []
-
+    
 def start_watchdog(stream_id):
     """Start the FFmpeg watchdog process for a given stream ID."""
     video_url = STREAM_URL_TEMPLATE.format(id=stream_id)
