@@ -123,7 +123,7 @@ def handle_buffering(stream_id):
         result = response.json()  # Parse the JSON response
 
         # Debugging: Print the full result for inspection
-        print(f"Response JSON: {result}")
+        #print(f"Response JSON: {result}")
 
         # Check both "IsError" and "isError"
         if not result.get("isError", True) or not result.get("IsError", True):
