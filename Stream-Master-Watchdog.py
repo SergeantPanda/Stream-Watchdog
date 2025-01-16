@@ -3,19 +3,8 @@ import requests
 import re
 import time
 import os
-import logging
-import sys
 from threading import Thread
 
-# Logging
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-
-logging.info("Stream Master Watchdog started")
 
 # Configuration
 
