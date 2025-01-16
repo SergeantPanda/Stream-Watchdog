@@ -13,7 +13,7 @@ SERVERURL = os.getenv("SERVERURL", "http://SERVERNAME:7095")  # Default value if
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg")
 BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFERING_THRESHOLD", 1.0))  # Default 1.0
 BUFFER_TIME_THRESHOLD = int(os.getenv("BUFFERING_TIME_LIMIT", 30))   # Default 30 seconds
-API_URL = f"{SERVERURL}/api/statistics/getchannelmetrics"
+CHANNEL_METRICS_API_URL = f"{SERVERURL}/api/statistics/getchannelmetrics"
 NEXT_STREAM_API_URL = f"{SERVERURL}/api/streaming/movetonextstream"
 STREAM_URL_TEMPLATE = f"{SERVERURL}/v/0/{{id}}"
 USER_AGENT = os.getenv("USER_AGENT", "Buffer Watchdog")  # Default to "Buffer Watchdog"
@@ -29,7 +29,7 @@ action_triggered = set()
 def get_running_streams():
     """Fetch current running streams from the API."""
     try:
-        response = requests.get(API_URL, headers={"accept": "application/json"})
+        response = requests.get(CHANNEL_METRICS_API_URL, headers={"accept": "application/json"})
         response.raise_for_status()
         streams = response.json()
         
