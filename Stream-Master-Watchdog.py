@@ -10,8 +10,8 @@ from threading import Thread
 SERVERURL = os.getenv("SERVERURL", "http://SERVERNAME:7095")  # Default value if not provided
 USER_AGENT = os.getenv("USER_AGENT", "Buffer Watchdog")  # Default to "Buffer Watchdog"
 QUERY_INTERVAL = int(os.getenv("QUERY_INTERVAL", 5))  # Default to 5 seconds
-BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFERING_THRESHOLD", 1.0))  # Default 1.0
-BUFFER_TIME_THRESHOLD = int(os.getenv("BUFFERING_TIME_LIMIT", 30))   # Default 30 seconds
+BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFER_SPEED_THRESHOLD", 1.0))  # Default 1.0
+BUFFER_TIME_THRESHOLD = int(os.getenv("BUFFER_TIME_THRESHOLD", 30))   # Default 30 seconds
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg")
 CHANNEL_METRICS_API_URL = f"{SERVERURL}/api/statistics/getchannelmetrics"
 NEXT_STREAM_API_URL = f"{SERVERURL}/api/streaming/movetonextstream"
