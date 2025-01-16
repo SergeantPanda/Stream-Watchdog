@@ -13,10 +13,6 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 - Python 3.8 or higher
 - Dependencies:
   - `requests`
-  - `re`
-  - `subprocess`
-  - `time`
-  - `threading`
 
 ## Installation
 1. Clone this repository:
@@ -57,16 +53,19 @@ version: "3.8"
 services:
   streammasterwatchdog:
     image: sergeantpanda/streammasterwatchdog:latest
-    container_name: streammasterwatchdog
+    container_name: StreamMasterWatchdog
     environment:
-      - SERVERURL=http://localhost:7095
+      - SERVERURL=http://STREAMMASTER:7095
       - QUERY_INTERVAL=5
       - USER_AGENT=Buffer Watchdog
       - BUFFER_SPEED_THRESHOLD=1.0
       - BUFFER_TIME_THRESHOLD=30
-    volumes:
-      - ./logs:/logs
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+         max-size: "10m"
+         max-file: "3"
 ```
 
 ## API Integration
