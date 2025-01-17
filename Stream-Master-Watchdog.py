@@ -99,8 +99,8 @@ def monitor_ffmpeg_output(stream_id, stream_name, process):
                     buffering_duration = time.time() - buffer_start_times[stream_id]
                     if buffering_duration >= BUFFER_TIME_THRESHOLD and stream_id not in action_triggered:
                         print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
-                        handle_buffering(stream_id)
                         action_triggered.add(stream_id)
+                        handle_buffering(stream_id)                        
             else:
                 if stream_id in buffer_start_times:
                     del buffer_start_times[stream_id]  # Reset buffering timer when speed improves
@@ -122,8 +122,10 @@ def handle_buffering(stream_id):
         response.raise_for_status()
         result = response.json()  # Parse the JSON response
 
-        # Debugging: Print the full result for inspection
-        #print(f"Response JSON: {result}")
+        # Reset the buffer start time to immediately monitor the new stream
+        buffer_start_times[stream_id] = time.time()
+        # Allow another switch if buffering persists
+        action_triggered.discard(stream_id)
 
         # Check both "IsError" and "isError"
         if not result.get("isError", True) or not result.get("IsError", True):
