@@ -60,6 +60,7 @@ services:
       - USER_AGENT=Buffer Watchdog
       - BUFFER_SPEED_THRESHOLD=1.0
       - BUFFER_TIME_THRESHOLD=30
+      - TZ=US/Central
     restart: unless-stopped
     logging:
       driver: "json-file"
