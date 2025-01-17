@@ -90,11 +90,22 @@ The script uses the following StreamMaster APIs:
 
 ## Example Output
 ```
-Started watchdog for stream 48
-Stream 48 - Speed: 2.84x
-Stream 48 - Speed: 0.90x
-Buffering detected on stream 48 for 30 seconds.
-Switched to the next stream successfully.
+Starting stream watchdog monitor...
+Started watchdog for channel ID: 101 - Sports Channel
+Started watchdog for channel ID: 102 - Movie Channel
+Started watchdog for channel ID: 103 - News Channel
+Channel ID: 101 - Current Speed: 1.2x - Sports Channel
+Channel ID: 102 - Current Speed: 1.0x - Movie Channel
+Channel ID: 103 - Current Speed: 0.8x - News Channel
+Buffering detected on channel 103 - News Channel.
+Channel ID: 103 - Current Speed: 0.6x - News Channel
+Buffering persisted on channel 103 (News Channel) for 30.05 seconds.
+Attempting to switch to the next stream for channel 103...
+Switched to the next stream for channel 103.
+Channel ID: 101 - Current Speed: 1.2x - Sports Channel
+Channel ID: 102 - Current Speed: 1.0x - Movie Channel
+Channel ID: 103 - Current Speed: 1.1x - News Channel (New Stream)
+Buffering resolved on channel 103 - News Channel.
 ```
 
 ## Contributing
