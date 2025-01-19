@@ -75,7 +75,7 @@ def start_watchdog(stream_id, stream_name):
     Thread(target=monitor_ffmpeg_output, args=(stream_id, process), daemon=True).start()
     print(f"Started watchdog for channel ID: {stream_id} - {stream_name}")
 
-def stop_watchdog(stream_id, stream_name=""):
+def stop_watchdog(stream_id, stream_name="", expect_stop=True):
     """Stop the FFmpeg watchdog process for a given stream ID."""
     process = watchdog_processes.pop(stream_id, None)
     if process:
@@ -87,38 +87,49 @@ def stop_watchdog(stream_id, stream_name=""):
         # Remove the stream name entry from watchdog_names
         if stream_id in watchdog_names:
             del watchdog_names[stream_id]  # Remove from the dictionary
-        print(f"Stopped watchdog for channel ID: {stream_id} - {stream_name}")
+        if expect_stop:
+            print(f"Stopped watchdog for channel ID: {stream_id} - {stream_name}")
+        else:
+            print(f"Watchdog process ended unexpectedly for channel ID: {stream_id} - {stream_name}")
 
 
 def monitor_ffmpeg_output(stream_id, process):
-    """Monitor the FFmpeg output for speed and update global state."""
+    """Monitor the FFmpeg output for speed and update global state."""    
     speed_pattern = re.compile(r"speed=\s*(\d+\.?\d*)x")
-    for line in process.stderr:
-        match = speed_pattern.search(line)
-        if match:
-            speed = match.group(1)
-            watchdog_speeds[stream_id] = float(speed)
+    while True:
+        # Check if FFmpeg process is still running
+        if process.poll() is not None:
             # Get the current stream name from the global watchdog_names dictionary
             stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
-            # Detect buffering: If speed drops below threshold, track it
-            if float(speed) < BUFFER_SPEED_THRESHOLD:
-                if stream_id not in buffer_start_times:
-                    buffer_start_times[stream_id] = time.time()  # Start buffering timer
-                    print(f"Buffering detected on channel {stream_id} - {stream_name}.")
+            # Process has terminated, clean up
+            stop_watchdog(stream_id, stream_name, False)
+            break  # Exit the monitoring loop
+        for line in process.stderr:
+            match = speed_pattern.search(line)
+            if match:
+                speed = match.group(1)
+                watchdog_speeds[stream_id] = float(speed)
+                # Get the current stream name from the global watchdog_names dictionary
+                stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
+                # Detect buffering: If speed drops below threshold, track it
+                if float(speed) < BUFFER_SPEED_THRESHOLD:
+                    if stream_id not in buffer_start_times:
+                        buffer_start_times[stream_id] = time.time()  # Start buffering timer
+                        print(f"Buffering detected on channel {stream_id} - {stream_name}.")
+                    else:
+                        buffering_duration = time.time() - buffer_start_times[stream_id]
+                        if buffering_duration >= BUFFER_TIME_THRESHOLD and stream_id not in action_triggered:
+                            print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
+                            action_triggered.add(stream_id)
+                            handle_buffering(stream_id)                        
                 else:
-                    buffering_duration = time.time() - buffer_start_times[stream_id]
-                    if buffering_duration >= BUFFER_TIME_THRESHOLD and stream_id not in action_triggered:
-                        print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
-                        action_triggered.add(stream_id)
-                        handle_buffering(stream_id)                        
-            else:
-                if stream_id in buffer_start_times:
-                    del buffer_start_times[stream_id]  # Reset buffering timer when speed improves
-                    # Get the current stream name from the global watchdog_names dictionary
-                    stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
-                    #get_running_streams()
-                    print(f"Buffering resolved on channel {stream_id} - {stream_name}.")
-                action_triggered.discard(stream_id)
+                    if stream_id in buffer_start_times:
+                        del buffer_start_times[stream_id]  # Reset buffering timer when speed improves
+                        # Get the current stream name from the global watchdog_names dictionary
+                        stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
+                        #get_running_streams()
+                        print(f"Buffering resolved on channel {stream_id} - {stream_name}.")
+                    action_triggered.discard(stream_id)
 
 def handle_buffering(stream_id):
     """Handle the buffering event by switching to the next stream."""
