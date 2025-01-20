@@ -186,13 +186,13 @@ def monitor_streams():
 
                 # Disconnect if watchdog is the only client
                 elif USER_AGENT in clients and len(clients) == 1:
-                    stop_watchdog(stream_id, stream_name)
+                    stop_watchdog(stream_id, stream_name, True)
 
 
             # Stop watchdogs for streams no longer running
             for stream_id in list(watchdog_processes):
                 if stream_id not in current_ids:
-                    stop_watchdog(stream_id)
+                    stop_watchdog(stream_id, stream_name, True)
 
             # Display the current speed of each watchdog
             for stream_id, speed in watchdog_speeds.items():
