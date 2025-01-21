@@ -11,6 +11,7 @@ USER_AGENT = os.getenv("USER_AGENT", "Buffer Watchdog")  # Default to "Buffer Wa
 QUERY_INTERVAL = int(os.getenv("QUERY_INTERVAL", 5))  # Default to 5 seconds
 BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFER_SPEED_THRESHOLD", 1.0))  # Default 1.0
 BUFFER_TIME_THRESHOLD = int(os.getenv("BUFFER_TIME_THRESHOLD", 30))   # Default 30 seconds
+BUFFER_EXTENSION_TIME = int(os.getenv("BUFFER_EXTENSION_TIME", 10))  # Default to 10 seconds
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg")
 CHANNEL_METRICS_API_URL = f"{SERVERURL}/api/statistics/getchannelmetrics"
 NEXT_STREAM_API_URL = f"{SERVERURL}/api/streaming/movetonextstream"
@@ -152,7 +153,7 @@ def handle_buffering(stream_id):
         # Update Steams to get new name
         get_running_streams()
         # Reset the buffer start time to immediately monitor the new stream
-        buffer_start_times[stream_id] = time.time()
+        buffer_start_times[stream_id] = time.time() + BUFFER_EXTENSION_TIME
         # Allow another switch if buffering persists
         action_triggered.discard(stream_id)
         # Get the current stream name from watchdog_names
@@ -160,7 +161,7 @@ def handle_buffering(stream_id):
 
         # Log the result of switching the stream
         if not result.get("isError", True) or not result.get("IsError", True):
-            print(f"Switched to the next stream for channel {stream_id} - {new_stream_name}.")
+            print(f"Switched to the next stream for channel {stream_id} - {new_stream_name}. Added {BUFFER_EXTENSION_TIME} seconds to buffer timer.")
         else:
             print(f"Failed to switch to the next stream for channel {stream_id} - {new_stream_name}.")
 
