@@ -32,9 +32,10 @@ Update the following variables in the script to match your environment:
 - `SERVERURL`: Base URL of your StreamMaster server (e.g., `http://localhost:7095`).
 - `FFMPEG_PATH`: Path to your `ffmpeg` executable.
 - `USER_AGENT`: Identifier used for the watchdog client.
-- `QUERY_INTERVAL`: Interval (in seconds) to query the API for stream updates.
-- `BUFFER_SPEED_THRESHOLD`: Speed threshold (default: `1.0x`) to detect buffering.
-- `BUFFER_TIME_THRESHOLD`: Time (in seconds) to wait before switching streams when buffering.
+- `QUERY_INTERVAL`: Interval (in seconds) to query the API for stream updates. Setting this faster will not speed up buffer detection. (default: `5`)
+- `BUFFER_SPEED_THRESHOLD`: Speed threshold to detect buffering. (default: `1.0`) 
+- `BUFFER_TIME_THRESHOLD`: Time (in seconds) to wait before switching streams when buffering. (default: `30`)
+- `BUFFER_EXTENSION_TIME`: Time (in seconds) to add to the buffer timeout after switching streams. (default: `10`)
 
 ## Usage
 1. Start the script:
@@ -60,6 +61,7 @@ services:
       - USER_AGENT=Buffer Watchdog
       - BUFFER_SPEED_THRESHOLD=1.0
       - BUFFER_TIME_THRESHOLD=30
+      - BUFFER_EXTENSION_TIME=10
       - TZ=US/Central
     restart: unless-stopped
     logging:
@@ -101,7 +103,7 @@ Buffering detected on channel 103 - News Channel.
 Channel ID: 103 - Current Speed: 0.6x - News Channel
 Buffering persisted on channel 103 (News Channel) for 30.05 seconds.
 Attempting to switch to the next stream for channel 103...
-Switched to the next stream for channel 103.
+Switched to the next stream for channel 103. Added 10 seconds to buffer timer.
 Channel ID: 101 - Current Speed: 1.2x - Sports Channel
 Channel ID: 102 - Current Speed: 1.0x - Movie Channel
 Channel ID: 103 - Current Speed: 1.1x - News Channel (New Stream)
