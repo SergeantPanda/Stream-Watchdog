@@ -171,13 +171,13 @@ def monitor_streams():
 
                 # Add watchdog to unmonitored streams
                 if stream_id not in watchdog_processes and USER_AGENT not in clients:
+                    # Remove watchdog_speeds for stream_id if exists
+                    watchdog_speeds.pop(stream_id, None)
                     start_watchdog(stream_id, stream_name)
 
                 # Disconnect if watchdog is the only client
                 elif USER_AGENT in clients and len(clients) == 1:
                     stop_watchdog(stream_id, stream_name, True)
-
-
             # Stop watchdogs for streams no longer running
             for stream_id in list(watchdog_processes):
                 if stream_id not in current_ids:
@@ -187,8 +187,6 @@ def monitor_streams():
             for stream_id, speed in watchdog_speeds.items():
                 stream_name = next((stream["name"] for stream in current_streams if stream["id"] == stream_id), "Unknown Stream")
                 print(f"Channel ID: {stream_id} - Current Speed: {speed}x - {stream_name}")
-
-
             # Wait for the next query cycle
             time.sleep(QUERY_INTERVAL)
 
