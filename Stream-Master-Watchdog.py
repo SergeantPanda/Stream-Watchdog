@@ -36,7 +36,7 @@ MODULE = os.getenv("MODULE", "Stream_Master")
 if SERVER_URL is None:
     raise Exception (f"Error: SERVER_URL is not defined!")
 else:
-    print(f"Attempting to connect to {SERVER_URL}")
+    print(f"Using server URL: {SERVER_URL}")
 
 # Import the required module dynamically
 module_path = f"Modules.{MODULE}"
