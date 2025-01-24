@@ -29,13 +29,14 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 ## Configuration
 Update the following variables in the script to match your environment:
 
-- `SERVERURL`: Base URL of your StreamMaster server (e.g., `http://localhost:7095`).
-- `FFMPEG_PATH`: Path to your `ffmpeg` executable.
+- `SERVER_URL`: Base URL of your StreamMaster server (e.g., `http://localhost:7095`).
 - `USER_AGENT`: Identifier used for the watchdog client.
 - `QUERY_INTERVAL`: Interval (in seconds) to query the API for stream updates. Setting this faster will not speed up buffer detection. (default: `5`)
 - `BUFFER_SPEED_THRESHOLD`: Speed threshold to detect buffering. (default: `1.0`) 
 - `BUFFER_TIME_THRESHOLD`: Time (in seconds) to wait before switching streams when buffering. (default: `30`)
 - `BUFFER_EXTENSION_TIME`: Time (in seconds) to add to the buffer timeout after switching streams. (default: `10`)
+- `FFMPEG_PATH`: Path to your `ffmpeg` executable.
+- `MODULE`: Module name to use. (default: `Stream_Master`)
 
 ## Usage
 1. Start the script:
@@ -57,12 +58,14 @@ services:
     container_name: StreamMasterWatchdog
     environment:
       - SERVERURL=http://STREAMMASTER:7095
-      - QUERY_INTERVAL=5
-      - USER_AGENT=Buffer Watchdog
-      - BUFFER_SPEED_THRESHOLD=1.0
-      - BUFFER_TIME_THRESHOLD=30
-      - BUFFER_EXTENSION_TIME=10
-      - TZ=US/Central
+      - QUERY_INTERVAL=5 # Optional
+      - USER_AGENT=Buffer Watchdog # Optional
+      - BUFFER_SPEED_THRESHOLD=1.0 # Optional
+      - BUFFER_TIME_THRESHOLD=30 # Optional
+      - BUFFER_EXTENSION_TIME=10 # Optional
+      - FFMPEG_PATH=/usr/bin/ffmpeg # Optional - Don't change unless you know what you're doing
+      - MODULE=Stream_Master # Optional
+      - TZ=US/Central # Optional
     restart: unless-stopped
     logging:
       driver: "json-file"
