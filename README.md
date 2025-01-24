@@ -88,7 +88,7 @@ The script uses the following StreamMaster APIs:
 - Payload:
   ```json
   {
-    "smChannelId": <stream_id>
+    "SMChannelId": <stream_id>
   }
   ```
 - Purpose: Commands StreamMaster to switch to the next stream.
