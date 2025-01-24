@@ -57,7 +57,7 @@ def send_next_stream(stream_id, stream_master_url):
     try:
         NEXT_STREAM_API_URL = f"{stream_master_url}/api/streaming/movetonextstream"
         # Trigger the next stream switch
-        payload = {"smChannelId": stream_id}
+        payload = {"SMChannelId": stream_id}
         response = requests.patch(
             NEXT_STREAM_API_URL,
             json=payload,
