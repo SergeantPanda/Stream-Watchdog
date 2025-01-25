@@ -50,7 +50,7 @@ def get_running_streams(stream_master_url):
         ], watchdog_names  # Return both the streams and the dictionary
     except Exception as e:
         print(f"Error fetching streams: {e}")
-        return []
+        return [None,None]
     
 def send_next_stream(stream_id, stream_master_url):
     """Handle the buffering event by switching to the next stream."""

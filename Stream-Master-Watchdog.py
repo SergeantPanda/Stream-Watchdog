@@ -161,7 +161,8 @@ def monitor_streams():
     while True:
         try:
             current_streams, watchdog_names = get_running_streams(SERVER_URL)
-
+            if current_streams is None:
+                continue
             # Process each stream
             current_ids = {stream["id"] for stream in current_streams}
             for stream in current_streams:
@@ -174,7 +175,6 @@ def monitor_streams():
                     # Remove watchdog_speeds for stream_id if exists
                     watchdog_speeds.pop(stream_id, None)
                     start_watchdog(stream_id, stream_name)
-
                 # Disconnect if watchdog is the only client
                 elif USER_AGENT in clients and len(clients) == 1:
                     stop_watchdog(stream_id, stream_name, True)
@@ -187,14 +187,13 @@ def monitor_streams():
             for stream_id, speed in watchdog_speeds.items():
                 stream_name = next((stream["name"] for stream in current_streams if stream["id"] == stream_id), "Unknown Stream")
                 print(f"Channel ID: {stream_id} - Current Speed: {speed}x - {stream_name}")
-            # Wait for the next query cycle
-            time.sleep(QUERY_INTERVAL)
-
         except KeyboardInterrupt:
             print("Interrupted by user. Cleaning up...")
             for stream_id in list(watchdog_processes):
                 stop_watchdog(stream_id, stream_name, True)
             break
+        # Wait for the next query cycle
+        time.sleep(QUERY_INTERVAL)
 
 if __name__ == "__main__":
     print("Starting stream watchdog monitor...")
