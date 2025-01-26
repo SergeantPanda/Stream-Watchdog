@@ -161,8 +161,6 @@ def monitor_streams():
     while True:
         try:
             current_streams, watchdog_names = get_running_streams(SERVER_URL)
-            if current_streams is None:
-                continue
             # Process each stream
             current_ids = {stream["id"] for stream in current_streams}
             for stream in current_streams:
