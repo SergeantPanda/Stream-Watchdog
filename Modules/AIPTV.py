@@ -82,7 +82,7 @@ def send_next_stream(channel_id,AIPTV_SERVER_URL):
         # Find the next available stream after the current one
         next_stream_id = find_next_stream_after_current(available_streams, current_stream_id)       
         # If a next stream is found, proceed to switch
-        if next_stream_id:
+        if next_stream_id != current_stream_id:
             url = f"{AIPTV_SERVER_URL}/api/proxy/stream/{channel_id}/switch"
             headers = {
                 "accept": "application/json",
@@ -118,11 +118,14 @@ def find_next_stream_after_current(available_streams, current_stream_id):
         # If there's a next stream in the list, return it
         if current_index + 1 < len(available_stream_ids):
             next_stream_id = available_stream_ids[current_index + 1]
-            return next_stream_id  # Return the next stream dictionary           
+            return next_stream_id  # Return the next stream dictionary
+        elif current_index +1 == len(available_stream_ids):
+            next_stream_id = available_stream_ids[0]
+            return next_stream_id # Return the first stream in the dictionary after reaching the end         
     return None  # Return None if no next stream is found
 
 # Test the function
 #if __name__ == "__main__":
-    #AIPTV_SERVER_URL = os.getenv("SERVER_URL", "http://SERVERNAME:7095")
+    #AIPTV_SERVER_URL = os.getenv("SERVER_URL", "http://SERVERNAME:5002")
     #channel_id = "a159c90e-f5fe1d7d"  # Replace with an actual channel ID for testing
     #send_next_stream(channel_id, AIPTV_SERVER_URL)

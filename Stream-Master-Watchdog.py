@@ -81,7 +81,6 @@ def start_watchdog(stream_id, stream_name):
     )
     watchdog_processes[stream_id] = process
     watchdog_names[stream_id] = stream_name  # Store the stream name
-
     # Start a thread to monitor speed from FFmpeg output
     Thread(target=monitor_ffmpeg_output, args=(stream_id, process, watchdog_names), daemon=True).start()
     print(f"Started watchdog for channel ID: {stream_id} - {stream_name}")
@@ -108,7 +107,6 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
     """Monitor the FFmpeg output for speed and update global state."""   
     speed_pattern = re.compile(r"speed=\s*(\d+\.?\d*)x")
     stream_swtiched = False
-
     while process.poll() is None:  # Continue looping while the process is running
         for line in process.stderr:
             match = speed_pattern.search(line)
@@ -150,7 +148,6 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                         print(f"Buffering resolved on channel {stream_id} - {stream_name}.")
                         stream_swtiched = False
                     action_triggered.discard(stream_id)
-
     # Process has terminated, clean up if unexpected
     stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
     if watchdog_processes.get(stream_id):
@@ -167,7 +164,6 @@ def monitor_streams():
                 stream_id = stream["id"]
                 stream_name = watchdog_names.get(stream_id, "Unknown Stream")
                 clients = stream["clients"]
-
                 # Add watchdog to unmonitored streams
                 if stream_id not in watchdog_processes and USER_AGENT not in clients:
                     # Remove watchdog_speeds for stream_id if exists
@@ -180,7 +176,6 @@ def monitor_streams():
             for stream_id in list(watchdog_processes):
                 if stream_id not in current_ids:
                     stop_watchdog(stream_id, stream_name, True)
-
             # Display the current speed of each watchdog
             for stream_id, speed in watchdog_speeds.items():
                 stream_name = next((stream["name"] for stream in current_streams if stream["id"] == stream_id), "Unknown Stream")
