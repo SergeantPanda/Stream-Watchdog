@@ -57,7 +57,7 @@ services:
     image: sergeantpanda/streammasterwatchdog:latest
     container_name: StreamMasterWatchdog
     environment:
-      - SERVERURL=http://STREAMMASTER:7095
+      - SERVER_URL=http://STREAMMASTER:7095
       - QUERY_INTERVAL=5 # Optional
       - USER_AGENT=Buffer Watchdog # Optional
       - BUFFER_SPEED_THRESHOLD=1.0 # Optional
