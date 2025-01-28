@@ -16,6 +16,9 @@
 
 import subprocess
 import time
+import shlex
+import os
+import shutil
 
 def execute_and_monitor_command(command, timeout=30):
     """
@@ -33,7 +36,16 @@ def execute_and_monitor_command(command, timeout=30):
         "runtime": 0,
         "status": "Success",  # Can be 'Success', 'Timeout', or 'Error'
     }
+    # Convert command string to a list if necessary
+    if isinstance(command, str):
+        command = shlex.split(command)
 
+    # Debug: Check if the command exists
+    if not shutil.which(command[0]):
+        result["status"] = "Error"
+        result["error"] = f"Command '{command[0]}' not found in system PATH."
+        print(result["error"])
+        return result
     print(f"Executing command: {command}")
     start_time = time.time()
 
@@ -83,4 +95,4 @@ def execute_and_monitor_command(command, timeout=30):
 # Test custom command
 if __name__ == "__main__":
     print("Testing custom command.")
-    execute_and_monitor_command("ping google.com -n 2", 30)
+    execute_and_monitor_command('ping google.com -c 2', 30)
