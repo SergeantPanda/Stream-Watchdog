@@ -35,7 +35,7 @@ Update the following variables in the script to match your environment:
 - `BUFFER_SPEED_THRESHOLD`: Speed threshold to detect buffering. (default: `1.0`) 
 - `BUFFER_TIME_THRESHOLD`: Time (in seconds) to wait before switching streams when buffering. (default: `30`)
 - `BUFFER_EXTENSION_TIME`: Time (in seconds) to add to the buffer timeout after switching streams. (default: `10`)
-- `CUSTOM_COMMAND`: Command that will run when buffering persists and a next stream is sent. (default: ``)
+- `CUSTOM_COMMAND`: Command that will run when buffering persists and a next stream is sent. (default: `no command provided`)
 - `CUSTOM_COMMAND_TIMEOUT`: Time (in seconds) to wait for a command before terminating it. (default:`10`)
 - `FFMPEG_PATH`: Path to your `ffmpeg` executable.
 - `MODULE`: Module name to use. (default: `Stream_Master`)
