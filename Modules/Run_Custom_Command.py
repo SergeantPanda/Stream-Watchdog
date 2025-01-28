@@ -16,8 +16,6 @@
 
 import subprocess
 import time
-import os
-import signal
 
 def execute_and_monitor_command(command, timeout=30):
     """
