@@ -55,7 +55,7 @@ except AttributeError as e:
     raise Exception(f"Error: Missing attributes in module '{module_path}'. {e}")
 
 # Import Custom_Command module if CUSTOM_COMMAND is set
-if CUSTOM_COMMAND is not "":
+if CUSTOM_COMMAND != "":
     Custom_Command_Path = f"Modules.Run_Custom_Command"
     try:
         from Modules.Run_Custom_Command import execute_and_monitor_command
@@ -143,7 +143,7 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                                 print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
                             action_triggered.add(stream_id)
                             # Run custom command if enabled
-                            if CUSTOM_COMMAND is not "":
+                            if CUSTOM_COMMAND != "":
                                 Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
                             if send_next_stream(stream_id, SERVER_URL):
                                 stream_swtiched = True
