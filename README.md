@@ -65,7 +65,7 @@ services:
       - BUFFER_SPEED_THRESHOLD=1.0 # Optional
       - BUFFER_TIME_THRESHOLD=30 # Optional
       - BUFFER_EXTENSION_TIME=10 # Optional
-      - CUSTOM_COMMAND="" # Optional
+      - CUSTOM_COMMAND=  # Optional - Don't use quotes around entire command
       - CUSTOM_COMMAND_TIMEOUT = 10 # Optional
       - FFMPEG_PATH=/usr/bin/ffmpeg # Optional - Don't change unless you know what you're doing
       - MODULE=Stream_Master # Optional
