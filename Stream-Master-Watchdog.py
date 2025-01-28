@@ -29,6 +29,8 @@ QUERY_INTERVAL = int(os.getenv("QUERY_INTERVAL", 5))  # Default to 5 seconds
 BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFER_SPEED_THRESHOLD", 1.0))  # Default 1.0
 BUFFER_TIME_THRESHOLD = int(os.getenv("BUFFER_TIME_THRESHOLD", 30))   # Default 30 seconds
 BUFFER_EXTENSION_TIME = int(os.getenv("BUFFER_EXTENSION_TIME", 10))  # Default to 10 seconds
+CUSTOM_COMMAND = os.getenv("CUSTOM_COMMAND", "") # Default is no command
+CUSTOM_COMMAND_TIMEOUT = int(os.getenv("CUSTOM_COMMAND_TIMEOUT", 10))  # Default to 10 seconds
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg")
 MODULE = os.getenv("MODULE", "Stream_Master")
 
@@ -52,6 +54,17 @@ except ModuleNotFoundError:
 except AttributeError as e:
     raise Exception(f"Error: Missing attributes in module '{module_path}'. {e}")
 
+# Import Custom_Command module if CUSTOM_COMMAND is set
+if CUSTOM_COMMAND is not "":
+    Custom_Command_Path = f"Modules.Run_Custom_Command"
+    try:
+        from Modules.Run_Custom_Command import execute_and_monitor_command
+        print(f"Successfully imported Run_Custom_Command module.")
+    except ModuleNotFoundError:
+        raise Exception(f"Error: Run_Custom_Command '{Custom_Command_Path}' not found. Ensure {Custom_Command_Path} exists.")
+    except Exception as e:
+        raise Exception(f"Error: Failed to import Run_Custom_Command module. {e}")
+    
 # Maintain running processes, speeds, and buffering timers with stream names
 watchdog_processes = {}
 watchdog_speeds = {}
@@ -129,6 +142,9 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                             else:
                                 print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
                             action_triggered.add(stream_id)
+                            # Run custom command if enabled
+                            if CUSTOM_COMMAND is not "":
+                                Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
                             if send_next_stream(stream_id, SERVER_URL):
                                 stream_swtiched = True
                                 action_triggered.discard(stream_id)
