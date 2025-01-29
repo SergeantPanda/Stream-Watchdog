@@ -102,9 +102,10 @@ def stop_watchdog(stream_id, stream_name="", expected_stop=True):
     """Stop the FFmpeg watchdog process for a given stream ID."""
     process = watchdog_processes.pop(stream_id, None)
     # Check if process exited
-    if process.poll() is None:
-        process.terminate()
-        process.wait()
+    if process is not None:
+        if process.poll() is None:
+            process.terminate()
+            process.wait()
     watchdog_speeds.pop(stream_id, None)
     buffer_start_times.pop(stream_id, None)
     action_triggered.discard(stream_id)
