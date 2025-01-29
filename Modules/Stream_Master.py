@@ -16,14 +16,12 @@
 
 import requests
 
-# Maintain running processes, speeds, and buffering timers with stream names
-watchdog_names = {}  # Store stream names
-
 def stream_url_template(SERVER_URL):
     return f"{SERVER_URL}/v/0/{{id}}"
 
 def get_running_streams(stream_master_url):
     """Fetch current running streams from the API."""
+    watchdog_names = {}  # Store stream names
     try:
         CHANNEL_METRICS_API_URL = f"{stream_master_url}/api/statistics/getchannelmetrics"
         response = requests.get(CHANNEL_METRICS_API_URL, headers={"accept": "application/json"})
