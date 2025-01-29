@@ -194,8 +194,12 @@ def monitor_streams():
                     stop_watchdog(stream_id, stream_name, True)
             # Display the current speed of each watchdog
             for stream_id, speed in watchdog_speeds.items():
-                stream_name = next((stream["name"] for stream in current_streams if stream["id"] == stream_id), "Unknown Stream")
-                print(f"Channel ID: {stream_id} - Current Speed: {speed}x - {stream_name}")
+                if watchdog_processes.get(stream_id) is not None:
+                    stream_name = next((stream["name"] for stream in current_streams if stream["id"] == stream_id), "Unknown Stream")
+                    print(f"Channel ID: {stream_id} - Current Speed: {speed}x - {stream_name}")
+                else:
+                    # Remove watchdog_speed if stream_id is no longer a running process
+                    watchdog_speeds.pop(stream_id)
         except KeyboardInterrupt:
             print("Interrupted by user. Cleaning up...")
             for stream_id in list(watchdog_processes):
