@@ -15,8 +15,6 @@
 # along with Stream Master Watchdog. If not, see <https://www.gnu.org/licenses/>.
 import requests
 
-watchdog_names = {}  # Store stream names
-
 def stream_url_template(AIPTV_SERVER_URL):
     return f"{AIPTV_SERVER_URL}/api/proxy/{{id}}"
 
