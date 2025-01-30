@@ -10,6 +10,7 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 - Logs relevant messages to the console, including buffering detection and resolution status.
 
 ## Requirements
+- FFMPEG
 - Python 3.8 or higher
 - Dependencies:
   - `requests`
