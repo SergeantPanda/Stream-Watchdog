@@ -18,7 +18,7 @@ import requests
 def stream_url_template(AIPTV_SERVER_URL):
     return f"{AIPTV_SERVER_URL}/api/proxy/{{id}}"
 
-def get_running_streams(AIPTV_SERVER_URL):
+def get_running_streams(AIPTV_SERVER_URL, USERNAME = None, PASSWORD = None):
     """Fetch current running streams from the API."""
     ACTIVE_CHANNELS_API = f"{AIPTV_SERVER_URL}/api/proxy/streams/active"
     watchdog_names = {}  # Initialize watchdog_names as an empty dictionary
@@ -66,7 +66,7 @@ def get_running_streams(AIPTV_SERVER_URL):
     return [], {}  # Return empty structures on failure
 
 
-def send_next_stream(channel_id,AIPTV_SERVER_URL):
+def send_next_stream(channel_id,AIPTV_SERVER_URL, USERNAME = None, PASSWORD = None):
     """Switch to the next available stream for a given channel ID."""
     streams, watchdog_names = get_running_streams(AIPTV_SERVER_URL)  # Fetch all streams
 
@@ -102,7 +102,7 @@ def send_next_stream(channel_id,AIPTV_SERVER_URL):
         print(f"Channel with ID {channel_id} not found.")
         return False
 
-def find_next_stream_after_current(available_streams, current_stream_id):
+def find_next_stream_after_current(available_streams, current_stream_id, USERNAME = None, PASSWORD = None):
     """Find the next available stream after the current one in the list."""
     # Transform available streams to a list of dictionaries
     available_streams_by_id = {stream["id"]: stream for stream in available_streams}   
