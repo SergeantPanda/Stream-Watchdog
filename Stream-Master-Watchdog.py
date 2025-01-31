@@ -24,6 +24,8 @@ from threading import Thread
 
 # Read environment variables
 SERVER_URL = os.getenv("SERVER_URL")  # Default value if not provided
+USERNAME = os.getenv("USERNAME")  # Default value if not provided
+PASSWORD = os.getenv("PASSWORD") # Default value if not provided
 USER_AGENT = os.getenv("USER_AGENT", "Buffer Watchdog")  # Default to "Buffer Watchdog"
 QUERY_INTERVAL = int(os.getenv("QUERY_INTERVAL", 5))  # Default to 5 seconds
 BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFER_SPEED_THRESHOLD", 1.0))  # Default 1.0
@@ -146,12 +148,12 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                             # Run custom command if enabled
                             if CUSTOM_COMMAND != "":
                                 Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
-                            if send_next_stream(stream_id, SERVER_URL):
+                            if send_next_stream(stream_id, SERVER_URL, USERNAME, PASSWORD):
                                 stream_swtiched = True
                                 action_triggered.discard(stream_id)
                                 buffer_start_times[stream_id] = time.time() + BUFFER_EXTENSION_TIME
                                 # Update Streams to get new name
-                                current_streams, watchdog_names = get_running_streams(SERVER_URL)
+                                current_streams, watchdog_names = get_running_streams(SERVER_URL, USERNAME, PASSWORD)
                                 # Get the current stream name from watchdog_names
                                 new_stream_name = watchdog_names.get(stream_id, "Unknown Stream")
                                 print(f"Switched to the next stream for channel {stream_id} - {new_stream_name}. Added {BUFFER_EXTENSION_TIME} seconds to buffer timer.")
@@ -174,7 +176,7 @@ def monitor_streams():
     """Monitor and manage streams periodically."""
     while True:
         try:
-            current_streams, watchdog_names = get_running_streams(SERVER_URL)
+            current_streams, watchdog_names = get_running_streams(SERVER_URL, USERNAME, PASSWORD)
             # Process each stream
             current_ids = {stream["id"] for stream in current_streams}
             for stream in current_streams:
