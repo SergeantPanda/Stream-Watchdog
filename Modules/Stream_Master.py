@@ -23,11 +23,12 @@ def stream_url_template(SERVER_URL):
 
 def login(stream_master_url, USERNAME, PASSWORD):
     global session
-    if USERNAME is None:
-        # Return an empty session if no username is supplied
-        return requests.session()
     if session is None:
         session = requests.Session()
+        if USERNAME is None:
+            # Return an empty session if no username is supplied
+            print(f"No credentials provided, skipping login.")
+            return requests.session()
         # Define login URL and credentials
         login_url = f"{stream_master_url}/login"
         credentials = {"username": USERNAME, "password": PASSWORD}
@@ -35,6 +36,8 @@ def login(stream_master_url, USERNAME, PASSWORD):
         session.post(login_url, data=credentials)
         if not session.cookies:
             print(f"Failed to log in, please verify username and password!")
+        else:
+            print(f"Successfully logged in!")        
     
     return session
 
