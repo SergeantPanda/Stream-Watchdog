@@ -31,9 +31,11 @@ def login(stream_master_url, USERNAME, PASSWORD):
         # Define login URL and credentials
         login_url = f"{stream_master_url}/login"
         credentials = {"username": USERNAME, "password": PASSWORD}
-
         # Perform the login
         session.post(login_url, data=credentials)
+        if not session.cookies:
+            print(f"Failed to log in, please verify username and password!")
+    
     return session
 
 def get_running_streams(stream_master_url, USERNAME = None, PASSWORD= None):
