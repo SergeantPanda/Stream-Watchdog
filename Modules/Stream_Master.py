@@ -23,9 +23,11 @@ def stream_url_template(SERVER_URL):
 
 def login(stream_master_url, USERNAME, PASSWORD):
     global session
+    if USERNAME is None:
+        # Return an empty session if no username is supplied
+        return requests.session()
     if session is None:
         session = requests.Session()
-
         # Define login URL and credentials
         login_url = f"{stream_master_url}/login"
         credentials = {"username": USERNAME, "password": PASSWORD}
@@ -40,8 +42,7 @@ def get_running_streams(stream_master_url, USERNAME = None, PASSWORD= None):
     headers = {"Accept": "application/json"}
     try:
         CHANNEL_METRICS_API_URL = f"{stream_master_url}/api/statistics/getchannelmetrics"
-        if USERNAME is not None:
-            session = login(stream_master_url, USERNAME, PASSWORD)
+        session = login(stream_master_url, USERNAME, PASSWORD)
         response = session.get(CHANNEL_METRICS_API_URL, headers=headers)
         response.raise_for_status()
         streams = response.json()
@@ -73,8 +74,7 @@ def send_next_stream(stream_id, stream_master_url, USERNAME = None, PASSWORD = N
     try:
         NEXT_STREAM_API_URL = f"{stream_master_url}/api/streaming/movetonextstream"
         # Trigger the next stream switch
-        if USERNAME is not None:
-            session = login(stream_master_url, USERNAME, PASSWORD)
+        session = login(stream_master_url, USERNAME, PASSWORD)
         payload = {"SMChannelId": stream_id}
         response = session.patch(
             NEXT_STREAM_API_URL,
