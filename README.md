@@ -31,8 +31,8 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 Update the following variables in the script to match your environment:
 
 - `SERVER_URL`: Base URL of your StreamMaster server (e.g., `http://StreamMaster:7095`).
-- `USERNAME`: # Username you use to login to the web ui.
-- `PASSWORD`: # Password you use to login to the web ui.
+- `USERNAME`: # Username you use to login to the web ui. (default: `none`)
+- `PASSWORD`: # Password you use to login to the web ui. (default: `none`)
 - `USER_AGENT`: Identifier used for the watchdog client.
 - `QUERY_INTERVAL`: Interval (in seconds) to query the API for stream updates. Setting this faster will not speed up buffer detection. (default: `5`)
 - `BUFFER_SPEED_THRESHOLD`: Speed threshold to detect buffering. (default: `1.0`) 
