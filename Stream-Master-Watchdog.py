@@ -67,6 +67,14 @@ if CUSTOM_COMMAND != "":
     except Exception as e:
         raise Exception(f"Error: Failed to import Run_Custom_Command module. {e}")
     
+def get_version():
+    try:
+        with open("version.txt", "r") as file:
+            return file.read().strip()
+    except Exception as e:
+        print(f"Unable to access version file! Error: {e}")
+        return "Unknown"
+    
 # Maintain running processes, speeds, and buffering timers with stream names
 watchdog_processes = {}
 watchdog_speeds = {}
@@ -212,5 +220,5 @@ def monitor_streams():
         time.sleep(QUERY_INTERVAL)
 
 if __name__ == "__main__":
-    print("Starting stream watchdog monitor...")
+    print(f"Starting Stream Watchdog version: {get_version()}...")
     monitor_streams()
