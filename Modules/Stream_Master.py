@@ -100,10 +100,12 @@ def send_next_stream(stream_id, stream_master_url, USERNAME = None, PASSWORD = N
     except Exception as e:
         print(f"Error switching to the next stream for channel {stream_id}: {e}")
         return False
-    
+   
 if __name__ == "__main__":
     import os
-    # Print cookies during test.
+    # Print USERNAME and PASSWORD being attempted
+    print(f"The following credentials will be attempted for the login: USERNAME: '{os.getenv('USERNAME')}' PASSWORD: '{os.getenv('PASSWORD')}'")
+    # Print cookies during test.   
     print(f"Cookie returned after login attempt:")
     print(f"{login(os.getenv('SERVER_URL'), os.getenv('USERNAME'), os.getenv('PASSWORD')).cookies}")
     # Print get_running_streams return
