@@ -36,36 +36,39 @@ CUSTOM_COMMAND_TIMEOUT = int(os.getenv("CUSTOM_COMMAND_TIMEOUT", 10))  # Default
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg") # Default to "/usr/bin/ffmpeg"
 MODULE = os.getenv("MODULE", "Stream_Master") # Default to "Stream_Master"
 
-# Exit if SERVER_URL is not defined
-if SERVER_URL is None:
-    raise Exception (f"Error: SERVER_URL is not defined!")
-else:
-    print(f"Using server URL: {SERVER_URL}")
+def startup():
+    # Exit if SERVER_URL is not defined
+    if SERVER_URL is None:
+        raise Exception (f"Error: SERVER_URL is not defined!")
+    else:
+        print(f"Using server URL: {SERVER_URL}")
 
-# Import the required module dynamically
-module_path = f"Modules.{MODULE}"
-try:
-    module = importlib.import_module(module_path)
-    # Dynamically access the desired functions and variables
-    get_running_streams = getattr(module, "get_running_streams")
-    send_next_stream = getattr(module, "send_next_stream")
-    stream_url_template = getattr(module, "stream_url_template")  
-    print(f"Successfully imported functions from {module_path}")
-except ModuleNotFoundError:
-    raise Exception(f"Error: Module '{module_path}' not found. Ensure the MODULE environment variable is set correctly.")
-except AttributeError as e:
-    raise Exception(f"Error: Missing attributes in module '{module_path}'. {e}")
-
-# Import Custom_Command module if CUSTOM_COMMAND is set
-if CUSTOM_COMMAND != "":
-    Custom_Command_Path = f"Modules.Run_Custom_Command"
+    # Import the required module dynamically
+    global get_running_streams, send_next_stream, stream_url_template, execute_and_monitor_command
+    module_path = f"Modules.{MODULE}"
     try:
-        from Modules.Run_Custom_Command import execute_and_monitor_command
-        print(f"Successfully imported Run_Custom_Command module.")
+        module = importlib.import_module(module_path)
+        # Dynamically access the desired functions and variables
+        get_running_streams = getattr(module, "get_running_streams")
+        send_next_stream = getattr(module, "send_next_stream")
+        stream_url_template = getattr(module, "stream_url_template")  
+        print(f"Successfully imported functions from {module_path}")
     except ModuleNotFoundError:
-        raise Exception(f"Error: Run_Custom_Command '{Custom_Command_Path}' not found. Ensure {Custom_Command_Path} exists.")
-    except Exception as e:
-        raise Exception(f"Error: Failed to import Run_Custom_Command module. {e}")
+        raise Exception(f"Error: Module '{module_path}' not found. Ensure the MODULE environment variable is set correctly.")
+    except AttributeError as e:
+        raise Exception(f"Error: Missing attributes in module '{module_path}'. {e}")
+    # Startup configuration complete, start monitoring streams
+    monitor_streams()
+    # Import Custom_Command module if CUSTOM_COMMAND is set
+    if CUSTOM_COMMAND != "":
+        Custom_Command_Path = f"Modules.Run_Custom_Command"
+        try:
+            from Modules.Run_Custom_Command import execute_and_monitor_command
+            print(f"Successfully imported Run_Custom_Command module.")
+        except ModuleNotFoundError:
+            raise Exception(f"Error: Run_Custom_Command '{Custom_Command_Path}' not found. Ensure {Custom_Command_Path} exists.")
+        except Exception as e:
+            raise Exception(f"Error: Failed to import Run_Custom_Command module. {e}")
     
 def get_version():
     try:
@@ -221,4 +224,5 @@ def monitor_streams():
 
 if __name__ == "__main__":
     print(f"Starting Stream Watchdog version: {get_version()}...")
-    monitor_streams()
+    startup()
+    #monitor_streams()
