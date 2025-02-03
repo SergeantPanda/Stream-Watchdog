@@ -103,5 +103,9 @@ def send_next_stream(stream_id, stream_master_url, USERNAME = None, PASSWORD = N
     
 if __name__ == "__main__":
     import os
-    # Return cookies during test.
+    # Print cookies during test.
+    print(f"Cookie returned after login attempt:")
     print(f"{login(os.getenv('SERVER_URL'), os.getenv('USERNAME'), os.getenv('PASSWORD')).cookies}")
+    # Print get_running_streams return
+    print(f"Currently running streams returned from API:")
+    print(f"{get_running_streams(os.getenv('SERVER_URL'), os.getenv('USERNAME'), os.getenv('PASSWORD'))}")
