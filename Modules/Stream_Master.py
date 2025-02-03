@@ -103,4 +103,5 @@ def send_next_stream(stream_id, stream_master_url, USERNAME = None, PASSWORD = N
     
 if __name__ == "__main__":
     import os
+    # Return cookies during test.
     print(f"{login(os.getenv('SERVER_URL'), os.getenv('USERNAME'), os.getenv('PASSWORD')).cookies}")
