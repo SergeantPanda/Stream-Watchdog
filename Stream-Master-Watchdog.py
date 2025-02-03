@@ -57,8 +57,6 @@ def startup():
         raise Exception(f"Error: Module '{module_path}' not found. Ensure the MODULE environment variable is set correctly.")
     except AttributeError as e:
         raise Exception(f"Error: Missing attributes in module '{module_path}'. {e}")
-    # Startup configuration complete, start monitoring streams
-    monitor_streams()
     # Import Custom_Command module if CUSTOM_COMMAND is set
     if CUSTOM_COMMAND != "":
         Custom_Command_Path = f"Modules.Run_Custom_Command"
@@ -69,7 +67,8 @@ def startup():
             raise Exception(f"Error: Run_Custom_Command '{Custom_Command_Path}' not found. Ensure {Custom_Command_Path} exists.")
         except Exception as e:
             raise Exception(f"Error: Failed to import Run_Custom_Command module. {e}")
-    
+    # Startup configuration complete, start monitoring streams
+    monitor_streams()
 def get_version():
     try:
         with open("version.txt", "r") as file:
@@ -134,54 +133,58 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
     """Monitor the FFmpeg output for speed and update global state."""   
     speed_pattern = re.compile(r"speed=\s*(\d+\.?\d*)x")
     stream_swtiched = False
-    while process.poll() is None:  # Continue looping while the process is running
-        for line in process.stderr:
-            match = speed_pattern.search(line)
-            if match:
-                speed = match.group(1)
-                watchdog_speeds[stream_id] = float(speed)
-                # Get the current stream name from the global watchdog_names dictionary
-                stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
-                # Detect buffering: If speed drops below threshold, track it
-                if float(speed) < BUFFER_SPEED_THRESHOLD:
-                    if stream_id not in buffer_start_times:
-                        buffer_start_times[stream_id] = time.time()  # Start buffering timer
-                        print(f"Buffering detected on channel {stream_id} - {stream_name}.")                        
+    try:
+        while process.poll() is None:  # Continue looping while the process is running
+            for line in process.stderr:
+                match = speed_pattern.search(line)
+                if match:
+                    speed = match.group(1)
+                    watchdog_speeds[stream_id] = float(speed)
+                    # Get the current stream name from the global watchdog_names dictionary
+                    stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
+                    # Detect buffering: If speed drops below threshold, track it
+                    if float(speed) < BUFFER_SPEED_THRESHOLD:
+                        if stream_id not in buffer_start_times:
+                            buffer_start_times[stream_id] = time.time()  # Start buffering timer
+                            print(f"Buffering detected on channel {stream_id} - {stream_name}.")                        
+                        else:
+                            buffering_duration = time.time() - buffer_start_times[stream_id]
+                            if buffering_duration >= BUFFER_TIME_THRESHOLD and stream_id not in action_triggered:
+                                if stream_swtiched:
+                                    buffering_duration += BUFFER_EXTENSION_TIME
+                                    print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
+                                else:
+                                    print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
+                                action_triggered.add(stream_id)
+                                # Run custom command if enabled
+                                if CUSTOM_COMMAND != "":
+                                    Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
+                                if send_next_stream(stream_id, SERVER_URL, USERNAME, PASSWORD):
+                                    stream_swtiched = True
+                                    action_triggered.discard(stream_id)
+                                    buffer_start_times[stream_id] = time.time() + BUFFER_EXTENSION_TIME
+                                    # Update Streams to get new name
+                                    current_streams, watchdog_names = get_running_streams(SERVER_URL, USERNAME, PASSWORD)
+                                    # Get the current stream name from watchdog_names
+                                    new_stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                                    print(f"Switched to the next stream for channel {stream_id} - {new_stream_name}. Added {BUFFER_EXTENSION_TIME} seconds to buffer timer.")
+                                else:
+                                    print(f"Failed to switch to the next stream for channel {stream_id}.")
                     else:
-                        buffering_duration = time.time() - buffer_start_times[stream_id]
-                        if buffering_duration >= BUFFER_TIME_THRESHOLD and stream_id not in action_triggered:
-                            if stream_swtiched:
-                                buffering_duration += BUFFER_EXTENSION_TIME
-                                print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
-                            else:
-                                print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
-                            action_triggered.add(stream_id)
-                            # Run custom command if enabled
-                            if CUSTOM_COMMAND != "":
-                                Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
-                            if send_next_stream(stream_id, SERVER_URL, USERNAME, PASSWORD):
-                                stream_swtiched = True
-                                action_triggered.discard(stream_id)
-                                buffer_start_times[stream_id] = time.time() + BUFFER_EXTENSION_TIME
-                                # Update Streams to get new name
-                                current_streams, watchdog_names = get_running_streams(SERVER_URL, USERNAME, PASSWORD)
-                                # Get the current stream name from watchdog_names
-                                new_stream_name = watchdog_names.get(stream_id, "Unknown Stream")
-                                print(f"Switched to the next stream for channel {stream_id} - {new_stream_name}. Added {BUFFER_EXTENSION_TIME} seconds to buffer timer.")
-                            else:
-                                print(f"Failed to switch to the next stream for channel {stream_id}.")
-                else:
-                    if stream_id in buffer_start_times:
-                        del buffer_start_times[stream_id]  # Reset buffering timer when speed improves
-                        # Get the current stream name from the global watchdog_names dictionary
-                        stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
-                        print(f"Buffering resolved on channel {stream_id} - {stream_name}.")
-                        stream_swtiched = False
-                    action_triggered.discard(stream_id)
-    # Process has terminated, clean up if unexpected
-    stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
-    if watchdog_processes.get(stream_id):
-        stop_watchdog(stream_id, stream_name, False)
+                        if stream_id in buffer_start_times:
+                            del buffer_start_times[stream_id]  # Reset buffering timer when speed improves
+                            # Get the current stream name from the global watchdog_names dictionary
+                            stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
+                            print(f"Buffering resolved on channel {stream_id} - {stream_name}.")
+                            stream_swtiched = False
+                        action_triggered.discard(stream_id)
+    except Exception as e:
+        print(f"Error occured in ffmpeg process: {e}")
+    finally:
+        # Process has terminated, clean up if unexpected
+        stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
+        if watchdog_processes.get(stream_id):
+            stop_watchdog(stream_id, stream_name, False)
 
 def monitor_streams():
     """Monitor and manage streams periodically."""
@@ -202,6 +205,9 @@ def monitor_streams():
                 # Disconnect if watchdog is the only client
                 elif USER_AGENT in clients and len(clients) == 1:
                     stop_watchdog(stream_id, stream_name, True)
+                # Close FFMPEG process if running but API doesn't return it as a client
+                elif (USER_AGENT not in clients) and (stream_id in watchdog_processes):
+                    stop_watchdog(stream_id,stream_name,True)
             # Stop watchdogs for streams no longer running
             for stream_id in list(watchdog_processes):
                 if stream_id not in current_ids:
@@ -225,4 +231,3 @@ def monitor_streams():
 if __name__ == "__main__":
     print(f"Starting Stream Watchdog version: {get_version()}...")
     startup()
-    #monitor_streams()
