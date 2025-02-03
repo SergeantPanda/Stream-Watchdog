@@ -23,9 +23,9 @@ import importlib
 from threading import Thread
 
 # Read environment variables
-SERVER_URL = os.getenv("SERVER_URL")  # Default value if not provided
-USERNAME = os.getenv("USERNAME")  # Default value if not provided
-PASSWORD = os.getenv("PASSWORD") # Default value if not provided
+SERVER_URL = os.getenv("SERVER_URL")  # No default value
+USERNAME = os.getenv("USERNAME")  # No default value
+PASSWORD = os.getenv("PASSWORD") # No default value
 USER_AGENT = os.getenv("USER_AGENT", "Buffer Watchdog")  # Default to "Buffer Watchdog"
 QUERY_INTERVAL = int(os.getenv("QUERY_INTERVAL", 5))  # Default to 5 seconds
 BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFER_SPEED_THRESHOLD", 1.0))  # Default 1.0
@@ -33,8 +33,8 @@ BUFFER_TIME_THRESHOLD = int(os.getenv("BUFFER_TIME_THRESHOLD", 30))   # Default 
 BUFFER_EXTENSION_TIME = int(os.getenv("BUFFER_EXTENSION_TIME", 10))  # Default to 10 seconds
 CUSTOM_COMMAND = os.getenv("CUSTOM_COMMAND", "") # Default is no command
 CUSTOM_COMMAND_TIMEOUT = int(os.getenv("CUSTOM_COMMAND_TIMEOUT", 10))  # Default to 10 seconds
-FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg")
-MODULE = os.getenv("MODULE", "Stream_Master")
+FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg") # Default to "/usr/bin/ffmpeg"
+MODULE = os.getenv("MODULE", "Stream_Master") # Default to "Stream_Master"
 
 # Exit if SERVER_URL is not defined
 if SERVER_URL is None:

@@ -101,3 +101,6 @@ def send_next_stream(stream_id, stream_master_url, USERNAME = None, PASSWORD = N
         print(f"Error switching to the next stream for channel {stream_id}: {e}")
         return False
     
+if __name__ == "__main__":
+    import os
+    print(f"{login(os.getenv('SERVER_URL'), os.getenv('USERNAME'), os.getenv('PASSWORD')).cookies}")
