@@ -46,7 +46,7 @@ Update the following variables in the script to match your environment:
 ## Usage
 1. Start the script:
    ```bash
-   python stream-master-watchdog.py
+   python Stream-Master-Watchdog.py
    ```
 2. The script will:
    - Periodically query the StreamMaster API for active streams.
