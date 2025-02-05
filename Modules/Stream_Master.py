@@ -33,23 +33,46 @@ def login(stream_master_url, USERNAME, PASSWORD):
         login_url = f"{stream_master_url}/login"
         credentials = {"username": USERNAME, "password": PASSWORD}
         # Perform the login
-        session.post(login_url, data=credentials)
+        try:
+            session.post(login_url, data=credentials)
+        except requests.exceptions.ConnectionError as e:
+            print(f"Unable to connect to Stream Master! Error: {e}")
+            return None
+        except Exception as e:
+            print(f"Error logging in: {e}")
+            return None
         if not session.cookies:
             print(f"Failed to log in, please verify username and password!")
+            return None
         else:
             print(f"Successfully logged in!")        
     
     return session
 
 def get_running_streams(stream_master_url, USERNAME = None, PASSWORD= None):
-    """Fetch current running streams from the API."""   
+    """Fetch current running streams from the API."""
+    global session   
     watchdog_names = {}  # Store stream names
     headers = {"Accept": "application/json"}
     try:
         CHANNEL_METRICS_API_URL = f"{stream_master_url}/api/statistics/getchannelmetrics"
         session = login(stream_master_url, USERNAME, PASSWORD)
-        response = session.get(CHANNEL_METRICS_API_URL, headers=headers)
+        # Check if session was returned indicating login is successful or not needed
+        if session is None:
+            # Connection error return empty response to not crash watchdog
+            return [],{}
+        response = session.get(CHANNEL_METRICS_API_URL, headers=headers, allow_redirects=False)
         response.raise_for_status()
+        # Check if a redirect occured indicating a login might be required
+        if response.is_redirect:
+            #if response.next.path_url == '/login':
+            redirect_location = response.headers.get("Location", "")
+            if "/login" in redirect_location:
+                print("Login page detected, is authentication enabled in Stream Master?")
+            else:
+                print(f"Redirect detected to: {redirect_location}, is authentication enabled in Stream Master?")
+            # Stop processing response and return empty
+            return [],{}
         streams = response.json()
         
         # Update the watchdog_names dictionary with stream names
@@ -72,6 +95,7 @@ def get_running_streams(stream_master_url, USERNAME = None, PASSWORD= None):
         ], watchdog_names  # Return both the streams and the dictionary
     except Exception as e:
         print(f"Error fetching streams: {e}")
+        session = None
         return [], {}  # Return empty structures on failure
     
 def send_next_stream(stream_id, stream_master_url, USERNAME = None, PASSWORD = None):
