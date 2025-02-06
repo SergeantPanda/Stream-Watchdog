@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Stream Master Watchdog. If not, see <https://www.gnu.org/licenses/>.
 
-
 import subprocess
 import re
 import time
 import os
 import importlib
+import psutil
 from threading import Thread
 
 # Read environment variables
@@ -31,11 +31,15 @@ QUERY_INTERVAL = int(os.getenv("QUERY_INTERVAL", 5))  # Default to 5 seconds
 BUFFER_SPEED_THRESHOLD = float(os.getenv("BUFFER_SPEED_THRESHOLD", 1.0))  # Default 1.0
 BUFFER_TIME_THRESHOLD = int(os.getenv("BUFFER_TIME_THRESHOLD", 30))   # Default 30 seconds
 BUFFER_EXTENSION_TIME = int(os.getenv("BUFFER_EXTENSION_TIME", 10))  # Default to 10 seconds
+ERROR_THRESHOLD = os.getenv("ERROR_THRESHOLD", 50)  # Number of errors before switching, Default 0 (disables error checking)
+ERROR_SWITCH_COOLDOWN = os.getenv("ERROR_SWITCH_COOLDOWN", 10)  # Default 10 seconds
+ERROR_RESET_TIME = os.getenv("ERROR_RESET_TIME", 20) # Default 20 seconds
 CUSTOM_COMMAND = os.getenv("CUSTOM_COMMAND", "") # Default is no command
 CUSTOM_COMMAND_TIMEOUT = int(os.getenv("CUSTOM_COMMAND_TIMEOUT", 10))  # Default to 10 seconds
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg") # Default to "/usr/bin/ffmpeg"
 MODULE = os.getenv("MODULE", "Stream_Master") # Default to "Stream_Master"
-   
+
+
 # Maintain running processes, speeds, and buffering timers with stream names
 watchdog_processes = {}
 watchdog_speeds = {}
@@ -84,21 +88,24 @@ def get_version():
         print(f"Unable to access version file! Error: {e}")
         return "Unknown"
     
+
+    
 def start_watchdog(stream_id, stream_name):
     """Start the FFmpeg watchdog process for a given stream ID."""
-    #stream_url_template = f"{SERVER_URL}/v/0/{{id}}"
     video_url = stream_url_template(SERVER_URL).format(id=stream_id)
     ffmpeg_args = [
         FFMPEG_PATH,
         "-hide_banner",
-        "-user_agent", USER_AGENT,       
+        "-user_agent", USER_AGENT,  
+        "-fflags", "+nobuffer+discardcorrupt",
+        "-flags", "low_delay",
+        "-rtbufsize", "10M",
+        "-i", video_url,
         "-fflags", "nobuffer",
         "-flags", "low_delay",
-        "-analyzeduration", "0",
-        "-i", video_url,
-        "-c", "copy",
+        "-max_muxing_queue_size", "512",
         "-f", "null",
-        "-",
+        "null",
     ]
     process = subprocess.Popen(
         ffmpeg_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
@@ -108,6 +115,7 @@ def start_watchdog(stream_id, stream_name):
     # Start a thread to monitor speed from FFmpeg output
     Thread(target=monitor_ffmpeg_output, args=(stream_id, process, watchdog_names), daemon=True).start()
     print(f"Started watchdog for channel ID: {stream_id} - {stream_name}")
+
 
 def stop_watchdog(stream_id, stream_name="", expected_stop=True):
     """Stop the FFmpeg watchdog process for a given stream ID."""
@@ -129,61 +137,136 @@ def stop_watchdog(stream_id, stream_name="", expected_stop=True):
         print(f"Watchdog process ended unexpectedly for channel ID: {stream_id} - {stream_name}")
 
 def monitor_ffmpeg_output(stream_id, process, watchdog_names):
-    """Monitor the FFmpeg output for speed and update global state."""   
+    """Monitor FFmpeg output for speed and errors, with cooldown before switching streams."""
+    
+    # Regular expression to capture the speed value from FFmpeg output
     speed_pattern = re.compile(r"speed=\s*(\d+\.?\d*)x")
-    stream_swtiched = False
+    # Define error patterns
+    ERROR_PATTERNS = [
+        re.compile(r"corrupt decoded frame"),
+        re.compile(r"error while decoding"),
+        re.compile(r"Invalid data found when processing input"),
+        re.compile(r"Reference \d+ >= \d+"),
+        re.compile(r"concealing \d+ DC, \d+ AC, \d+ MV errors"),
+    ]
+    # Variables to track stream switching and errors
+    stream_switched = False  # Ensures only one switch per buffering instance
+    error_count = 0  # Tracks the number of FFmpeg errors
+    error_start_time = None  # Records the start time of error occurrences
+    last_switch_time = 0  # Tracks the last time a stream was switched
+    continue_read = True
     try:
-        while process.poll() is None:  # Continue looping while the process is running
-            for line in process.stderr:
-                match = speed_pattern.search(line)
-                if match:
-                    speed = match.group(1)
-                    watchdog_speeds[stream_id] = float(speed)
-                    # Get the current stream name from the global watchdog_names dictionary
-                    stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
-                    # Detect buffering: If speed drops below threshold, track it
-                    if float(speed) < BUFFER_SPEED_THRESHOLD:
+        while process.poll() is None:  # While FFmpeg is running
+            for line in iter(process.stderr.readline, ''):
+                if continue_read is False:
+                    break
+                line = line.strip()
+                stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                # Check for speed issues (buffering)
+                speed_match = speed_pattern.search(line)
+                if speed_match:
+                    speed = float(speed_match.group(1))
+                    watchdog_speeds[stream_id] = speed  # Store current speed
+                    #stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+
+                    # Detect buffering if speed drops below threshold
+                    if speed < BUFFER_SPEED_THRESHOLD:
                         if stream_id not in buffer_start_times:
-                            buffer_start_times[stream_id] = time.time()  # Start buffering timer
-                            print(f"Buffering detected on channel {stream_id} - {stream_name}.")                        
-                        else:
-                            buffering_duration = time.time() - buffer_start_times[stream_id]
-                            if buffering_duration >= BUFFER_TIME_THRESHOLD and stream_id not in action_triggered:
-                                if stream_swtiched:
-                                    buffering_duration += BUFFER_EXTENSION_TIME
-                                    print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
+                            buffer_start_times[stream_id] = time.time()
+                            stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                            print(f"⚠️ Buffering detected on channel {stream_id} - {stream_name}.")
+
+                        # Calculate how long buffering has persisted
+                        buffering_duration = time.time() - buffer_start_times[stream_id]
+                        
+                        # If buffering persists beyond the defined threshold, consider switching
+                        if buffering_duration >= BUFFER_TIME_THRESHOLD:
+                            # Ensure we don’t switch too frequently
+                            if not stream_switched or (time.time() - last_switch_time > BUFFER_TIME_THRESHOLD + BUFFER_TIME_THRESHOLD):
+                                stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+
+                                # Determine how long buffering has occurred (before or after switching)
+                                if stream_switched:
+                                    stream_buffering_duration = time.time() - last_switch_time
                                 else:
-                                    print(f"Buffering persisted on channel {stream_id} ({stream_name}) for {buffering_duration:.2f} seconds.")
-                                action_triggered.add(stream_id)
+                                    stream_buffering_duration = buffering_duration                               
+                                print(f"⏳ Buffering persisted on channel {stream_id} ({stream_name}) for {stream_buffering_duration:.2f} seconds (total buffering time: {buffering_duration:.2f} seconds).")
                                 # Run custom command if enabled
                                 if CUSTOM_COMMAND:
                                     Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
+                                # Attempt to switch to the next available stream
                                 if send_next_stream(stream_id, SERVER_URL, USERNAME, PASSWORD):
-                                    stream_swtiched = True
-                                    action_triggered.discard(stream_id)
-                                    buffer_start_times[stream_id] = time.time() + BUFFER_EXTENSION_TIME
-                                    # Update Streams to get new name
-                                    current_streams, watchdog_names = get_running_streams(SERVER_URL, USERNAME, PASSWORD)
-                                    # Get the current stream name from watchdog_names
-                                    new_stream_name = watchdog_names.get(stream_id, "Unknown Stream")
-                                    print(f"Switched to the next stream for channel {stream_id} - {new_stream_name}. Added {BUFFER_EXTENSION_TIME} seconds to buffer timer.")
+                                    stream_switched = True
+                                    last_switch_time = time.time()  # Update last switch time
+                                    stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                                    print(f"✅ Switched stream for channel {stream_id} - {stream_name}.")
                                 else:
-                                    print(f"Failed to switch to the next stream for channel {stream_id}.")
+                                    print(f"❌ Failed to switch stream for channel {stream_id}.")
                     else:
+                        # Reset buffering state when speed returns to normal
                         if stream_id in buffer_start_times:
-                            del buffer_start_times[stream_id]  # Reset buffering timer when speed improves
-                            # Get the current stream name from the global watchdog_names dictionary
-                            stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
-                            print(f"Buffering resolved on channel {stream_id} - {stream_name}.")
-                            stream_swtiched = False
-                        action_triggered.discard(stream_id)
+                            del buffer_start_times[stream_id]
+                            stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                            print(f"✅ Buffering resolved for channel {stream_name}.")
+                        
+                        # Allow future switches when buffering is no longer an issue
+                        stream_switched = False  
+                        last_switch_time = 0  # Reset switch cooldown
+
+                # Check for FFmpeg errors if enabled
+                if ERROR_THRESHOLD > 0:
+                    for error_pattern in ERROR_PATTERNS:
+                        if error_pattern.search(line):
+                            error_count += 1
+                            #stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                            print(f"⚠️ FFmpeg error detected on channel {stream_id} ({stream_name}): {line}")
+
+                            # Record the first error time
+                            if error_start_time is None:
+                                error_start_time = time.time()
+
+                            # Reset error count if errors occur too far apart
+                            if time.time() - error_start_time > ERROR_RESET_TIME:
+                                error_count = 1
+                                error_start_time = time.time()
+
+                            # If too many errors occur within the threshold, switch streams
+                            if error_count >= ERROR_THRESHOLD:
+                                current_time = time.time()
+
+                                # Prevent switching if still within the cooldown period
+                                if current_time - last_switch_time < ERROR_SWITCH_COOLDOWN:
+                                    print(f"🕒 Cooldown active. Not switching channel {stream_id} ({stream_name}) yet.")
+                                    continue  # Skip switching
+                                stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                                print(f"❌ Too many errors on channel {stream_name}. Switching stream.")
+                                # Run custom command if enabled
+                                if CUSTOM_COMMAND:
+                                    Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
+                                # Attempt to switch the stream
+                                if send_next_stream(stream_id, SERVER_URL, USERNAME, PASSWORD):
+                                    stream_switched = True
+                                    last_switch_time = current_time  # Update last switch time
+                                    stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                                    error_count = 0               
+                                    print(f"✅ Switched stream for channel {stream_id} - {stream_name}.")
+                                else:
+                                    print(f"❌ Failed to switch channel {stream_id}.")
+                                # Max number of errors reached, break out of for loop
+                                continue_read = False
+                                break
+            # Change continue read back to true
+            continue_read = True
+
     except Exception as e:
-        print(f"Error occured in ffmpeg process: {e}")
+        print(f"❌ Error in FFmpeg process: {e}")
+
     finally:
-        # Process has terminated, clean up if unexpected
-        stream_name = watchdog_names.get(stream_id, "Unknown Stream")  # Default to "Unknown Stream" if not found
+        # Ensure that the watchdog process is properly stopped if needed
         if watchdog_processes.get(stream_id):
+            stream_name = watchdog_names.get(stream_id, "Unknown Stream")
             stop_watchdog(stream_id, stream_name, False)
+
 
 def monitor_streams():
     """Monitor and manage streams periodically."""
@@ -214,8 +297,8 @@ def monitor_streams():
             # Display the current speed of each watchdog
             for stream_id, speed in watchdog_speeds.items():
                 if watchdog_processes.get(stream_id) is not None:
-                    stream_name = next((stream["name"] for stream in current_streams if stream["id"] == stream_id), "Unknown Stream")
-                    print(f"Channel ID: {stream_id} - Current Speed: {speed}x - {stream_name}")
+                    stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                    print(f"Channel ID: {stream_id} - Current Speed: {speed:.2f}x - {stream_name}")
                 else:
                     # Remove watchdog_speed if stream_id is no longer a running process
                     watchdog_speeds.pop(stream_id)
@@ -226,6 +309,28 @@ def monitor_streams():
             break
         # Wait for the next query cycle
         time.sleep(QUERY_INTERVAL)
+        # Monitor the current watchdog ffmpeg processes for high memory usage
+        Thread(target=monitor_ffmpeg_memory, args=(watchdog_processes,), daemon=True).start()
+
+def monitor_ffmpeg_memory(watchdog_processes, max_memory_mb=150):
+    """Monitor all FFmpeg processes and restart them if memory usage exceeds max_memory_mb."""
+    for stream_id, process in list(watchdog_processes.items()):
+        if process.poll() is None:  # Process is still running
+            try:
+                mem_usage = psutil.Process(process.pid).memory_info().rss / (1024 * 1024)  # Convert bytes to MB
+                
+                if mem_usage > max_memory_mb:
+                    print(f"⚠️ FFmpeg process {stream_id} exceeded {max_memory_mb:.2f}MB! Restarting...")
+                    process.kill()  # Kill the process
+                    process.wait(timeout=5)  # Ensure it fully exits
+                    watchdog_processes.pop(stream_id, None)  # Remove from tracking
+                    stream_name = watchdog_names.get(stream_id, "Unknown Stream")
+                    stop_watchdog(stream_id, stream_name)
+                    start_watchdog(stream_id, stream_name)  # Restart
+                    
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue  # Process might have already exited
+
 
 if __name__ == "__main__":
     print(f"Starting Stream Watchdog version: {get_version()}...")
