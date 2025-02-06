@@ -14,6 +14,7 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 - Python 3.8 or higher
 - Dependencies:
   - `requests`
+  - `psutil`
 
 ## Installation
 1. Clone this repository:
@@ -24,6 +25,7 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 2. Install required Python dependencies:
    ```bash
    pip install requests
+   pip install psutil
    ```
 3. Ensure `ffmpeg` is installed and available on your system.
 
