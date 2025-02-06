@@ -35,6 +35,13 @@ CUSTOM_COMMAND = os.getenv("CUSTOM_COMMAND", "") # Default is no command
 CUSTOM_COMMAND_TIMEOUT = int(os.getenv("CUSTOM_COMMAND_TIMEOUT", 10))  # Default to 10 seconds
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg") # Default to "/usr/bin/ffmpeg"
 MODULE = os.getenv("MODULE", "Stream_Master") # Default to "Stream_Master"
+   
+# Maintain running processes, speeds, and buffering timers with stream names
+watchdog_processes = {}
+watchdog_speeds = {}
+watchdog_names = {}  # Store stream names
+buffer_start_times = {}
+action_triggered = set()
 
 def startup():
     # Exit if SERVER_URL is not defined
@@ -76,13 +83,6 @@ def get_version():
     except Exception as e:
         print(f"Unable to access version file! Error: {e}")
         return "Unknown"
-    
-# Maintain running processes, speeds, and buffering timers with stream names
-watchdog_processes = {}
-watchdog_speeds = {}
-watchdog_names = {}  # Store stream names
-buffer_start_times = {}
-action_triggered = set()
     
 def start_watchdog(stream_id, stream_name):
     """Start the FFmpeg watchdog process for a given stream ID."""
