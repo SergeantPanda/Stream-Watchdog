@@ -33,17 +33,20 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 Update the following variables in the script to match your environment:
 
 - `SERVER_URL`: Base URL of your StreamMaster server (e.g., `http://StreamMaster:7095`).
-- `USERNAME`: # Username you use to login to the web ui. (default: `none`)
-- `PASSWORD`: # Password you use to login to the web ui. (default: `none`)
-- `USER_AGENT`: Identifier used for the watchdog client.
-- `QUERY_INTERVAL`: Interval (in seconds) to query the API for stream updates. Setting this faster will not speed up buffer detection. (default: `5`)
-- `BUFFER_SPEED_THRESHOLD`: Speed threshold to detect buffering. (default: `1.0`) 
-- `BUFFER_TIME_THRESHOLD`: Time (in seconds) to wait before switching streams when buffering. (default: `30`)
-- `BUFFER_EXTENSION_TIME`: Time (in seconds) to add to the buffer timeout after switching streams. (default: `10`)
-- `CUSTOM_COMMAND`: Command that will run when buffering persists and a next stream is sent. (default: `no command provided`)
-- `CUSTOM_COMMAND_TIMEOUT`: Time (in seconds) to wait for a command before terminating it. (default:`10`)
+- `USERNAME`: # Username you use to login to the web ui. (Default: `none`)
+- `PASSWORD`: # Password you use to login to the web ui. (Default: `none`)
+- `USER_AGENT`: Identifier used for the watchdog client. (Default: `Buffer Watchdog`)
+- `QUERY_INTERVAL`: Interval (in seconds) to query the API for stream updates. Setting this faster will not speed up buffer detection. (Default: `5`)
+- `BUFFER_SPEED_THRESHOLD`: Speed threshold to detect buffering. (Default: `1.0`) 
+- `BUFFER_TIME_THRESHOLD`: Time (in seconds) to wait before switching streams when buffering. (Default: `30`)
+- `BUFFER_EXTENSION_TIME`: Time (in seconds) to add to the buffer timeout after switching streams. (Default: `10`)
+- `ERROR_THRESHOLD`: Number of errors before switching. (Default: `0` (disables error checking))
+- `ERROR_SWITCH_COOLDOWN`: Time (in seconds) between stream switches if errors trigger the switch. (Default: `10`)
+- `ERROR_RESET_TIME`: Time (in seconds) to wait before error count resets to 0. (Default: `20`)
+- `CUSTOM_COMMAND`: Command that will run when buffering persists and a next stream is sent. (Default: `no command provided`)
+- `CUSTOM_COMMAND_TIMEOUT`: Time (in seconds) to wait for a command before terminating it. (Default:`10`)
 - `FFMPEG_PATH`: Path to your `ffmpeg` executable.
-- `MODULE`: Module name to use. (default: `Stream_Master`)
+- `MODULE`: Module name to use. (Default: `Stream_Master`)
 
 ## Usage
 1. Start the script:
@@ -72,6 +75,7 @@ services:
       - BUFFER_SPEED_THRESHOLD=1.0 # Optional
       - BUFFER_TIME_THRESHOLD=30 # Optional
       - BUFFER_EXTENSION_TIME=10 # Optional
+      - ERROR_THRESHOLD=0 # Optional (value higher than 0 enables error checking)
       - CUSTOM_COMMAND=  # Optional - Don't use quotes around entire command
       - CUSTOM_COMMAND_TIMEOUT = 10 # Optional
       - FFMPEG_PATH=/usr/bin/ffmpeg # Optional - Don't change unless you know what you're doing
