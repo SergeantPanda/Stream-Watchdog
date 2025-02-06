@@ -78,6 +78,10 @@ def startup():
             raise Exception(f"Error: Run_Custom_Command '{Custom_Command_Path}' not found. Ensure {Custom_Command_Path} exists.")
         except Exception as e:
             raise Exception(f"Error: Failed to import Run_Custom_Command module. {e}")
+    if ERROR_THRESHOLD:
+        print(f"Stream error detection enabled!")
+    else:
+        print(f"Stream error detection disabled! If you want to enable it, set ERROR_THRESHOLD environmental variable.")
     # Startup configuration complete, start monitoring streams
     monitor_streams()
 def get_version():
@@ -93,20 +97,34 @@ def get_version():
 def start_watchdog(stream_id, stream_name):
     """Start the FFmpeg watchdog process for a given stream ID."""
     video_url = stream_url_template(SERVER_URL).format(id=stream_id)
-    ffmpeg_args = [
-        FFMPEG_PATH,
-        "-hide_banner",
-        "-user_agent", USER_AGENT,  
-        "-fflags", "+nobuffer+discardcorrupt",
-        "-flags", "low_delay",
-        "-rtbufsize", "10M",
-        "-i", video_url,
-        "-fflags", "nobuffer",
-        "-flags", "low_delay",
-        "-max_muxing_queue_size", "512",
-        "-f", "null",
-        "null",
-    ]
+    if ERROR_THRESHOLD:
+        ffmpeg_args = [
+            FFMPEG_PATH,
+            "-hide_banner",
+            "-user_agent", USER_AGENT,  
+            "-fflags", "+nobuffer+discardcorrupt",
+            "-flags", "low_delay",
+            "-rtbufsize", "10M",
+            "-i", video_url,
+            "-fflags", "nobuffer",
+            "-flags", "low_delay",
+            "-max_muxing_queue_size", "512",
+            "-f", "null",
+            "null",
+        ]
+    else:
+        ffmpeg_args = [
+            FFMPEG_PATH,
+            "-hide_banner",
+            "-user_agent", USER_AGENT,  
+            "-fflags", "+nobuffer+discardcorrupt",
+            "-flags", "low_delay",
+            "-rtbufsize", "10M",
+            "-i", video_url,
+            "-c", "copy",
+            "-f", "null",
+            "null",
+        ]
     process = subprocess.Popen(
         ffmpeg_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )
