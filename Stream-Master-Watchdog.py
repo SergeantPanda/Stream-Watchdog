@@ -225,7 +225,7 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                         if stream_id in buffer_start_times:
                             del buffer_start_times[stream_id]
                             stream_name = watchdog_names.get(stream_id, "Unknown Stream")
-                            print(f"✅ Buffering resolved for channel {stream_name}.")
+                            print(f"✅ Buffering resolved on channel {stream_id} - {stream_name}.")
                         
                         # Allow future switches when buffering is no longer an issue
                         stream_switched = False  
@@ -257,7 +257,7 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                                     print(f"🕒 Cooldown active. Not switching channel {stream_id} ({stream_name}) yet.")
                                     continue  # Skip switching
                                 stream_name = watchdog_names.get(stream_id, "Unknown Stream")
-                                print(f"❌ Too many errors on channel {stream_name}. Switching stream.")
+                                print(f"❌ Too many errors on channel {stream_id} ({stream_name}). Switching stream.")
                                 # Run custom command if enabled
                                 if CUSTOM_COMMAND:
                                     Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
