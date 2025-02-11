@@ -96,6 +96,7 @@ def get_version():
     
 def start_watchdog(stream_id, stream_name):
     """Start the FFmpeg watchdog process for a given stream ID."""
+    global watchdog_names
     video_url = stream_url_template(SERVER_URL).format(id=stream_id)
     if ERROR_THRESHOLD:
         ffmpeg_args = [
@@ -131,7 +132,7 @@ def start_watchdog(stream_id, stream_name):
     watchdog_processes[stream_id] = process
     watchdog_names[stream_id] = stream_name  # Store the stream name
     # Start a thread to monitor speed from FFmpeg output
-    Thread(target=monitor_ffmpeg_output, args=(stream_id, process, watchdog_names), daemon=True).start()
+    Thread(target=monitor_ffmpeg_output, args=(stream_id, process), daemon=True).start()
     print(f"Started watchdog for channel ID: {stream_id} - {stream_name}")
 
 
@@ -154,9 +155,9 @@ def stop_watchdog(stream_id, stream_name="", expected_stop=True):
     else:
         print(f"Watchdog process ended unexpectedly for channel ID: {stream_id} - {stream_name}")
 
-def monitor_ffmpeg_output(stream_id, process, watchdog_names):
+def monitor_ffmpeg_output(stream_id, process):
     """Monitor FFmpeg output for speed and errors, with cooldown before switching streams."""
-    
+    global watchdog_names
     # Regular expression to capture the speed value from FFmpeg output
     speed_pattern = re.compile(r"speed=\s*(\d+\.?\d*)x")
     # Define error patterns
@@ -214,6 +215,8 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                                     Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
                                 # Attempt to switch to the next available stream
                                 if send_next_stream(stream_id, SERVER_URL, USERNAME, PASSWORD):
+                                    # Update watchdog names to reflect new stream name
+                                    current_streams, watchdog_names = get_running_streams(SERVER_URL, USERNAME, PASSWORD)
                                     stream_switched = True
                                     last_switch_time = time.time()  # Update last switch time
                                     stream_name = watchdog_names.get(stream_id, "Unknown Stream")
@@ -225,7 +228,7 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                         if stream_id in buffer_start_times:
                             del buffer_start_times[stream_id]
                             stream_name = watchdog_names.get(stream_id, "Unknown Stream")
-                            print(f"✅ Buffering resolved on channel {stream_id} - {stream_name}.")
+                            print(f"✅ Buffering resolved for channel {stream_name}.")
                         
                         # Allow future switches when buffering is no longer an issue
                         stream_switched = False  
@@ -257,12 +260,14 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
                                     print(f"🕒 Cooldown active. Not switching channel {stream_id} ({stream_name}) yet.")
                                     continue  # Skip switching
                                 stream_name = watchdog_names.get(stream_id, "Unknown Stream")
-                                print(f"❌ Too many errors on channel {stream_id} ({stream_name}). Switching stream.")
+                                print(f"❌ Too many errors on channel {stream_name}. Switching stream.")
                                 # Run custom command if enabled
                                 if CUSTOM_COMMAND:
                                     Thread(target=execute_and_monitor_command, args=(CUSTOM_COMMAND, 10), daemon=True).start()
                                 # Attempt to switch the stream
                                 if send_next_stream(stream_id, SERVER_URL, USERNAME, PASSWORD):
+                                    # Update watchdog names to reflect new stream name
+                                    current_streams, watchdog_names = get_running_streams(SERVER_URL, USERNAME, PASSWORD)
                                     stream_switched = True
                                     last_switch_time = current_time  # Update last switch time
                                     stream_name = watchdog_names.get(stream_id, "Unknown Stream")
@@ -288,6 +293,7 @@ def monitor_ffmpeg_output(stream_id, process, watchdog_names):
 
 def monitor_streams():
     """Monitor and manage streams periodically."""
+    global watchdog_names
     while True:
         try:
             current_streams, watchdog_names = get_running_streams(SERVER_URL, USERNAME, PASSWORD)
