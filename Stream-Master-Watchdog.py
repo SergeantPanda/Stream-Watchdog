@@ -201,7 +201,7 @@ def monitor_ffmpeg_output(stream_id, process):
                         # If buffering persists beyond the defined threshold, consider switching
                         if buffering_duration >= BUFFER_TIME_THRESHOLD:
                             # Ensure we don’t switch too frequently
-                            if not stream_switched or (time.time() - last_switch_time > BUFFER_TIME_THRESHOLD + BUFFER_TIME_THRESHOLD):
+                            if not stream_switched or (time.time() - last_switch_time > BUFFER_TIME_THRESHOLD + BUFFER_EXTENSION_TIME):
                                 stream_name = watchdog_names.get(stream_id, "Unknown Stream")
 
                                 # Determine how long buffering has occurred (before or after switching)
