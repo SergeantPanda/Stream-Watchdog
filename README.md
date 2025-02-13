@@ -46,7 +46,7 @@ Update the following variables in the script to match your environment:
 - `CUSTOM_COMMAND`: Command that will run when buffering persists and a next stream is sent. (Default: `no command provided`)
 - `CUSTOM_COMMAND_TIMEOUT`: Time (in seconds) to wait for a command before terminating it. (Default:`10`)
 - `FFMPEG_PATH`: Path to your `ffmpeg` executable.
-- `MODULE`: Module name to use. (Default: `Stream_Master`)
+- `MODULE`: Module name to use. (Default: `Stream_Master`) (Accepted Values: `Stream_Master`,`AIPTV`)
 
 ## Usage
 1. Start the script:
