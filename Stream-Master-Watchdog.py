@@ -143,7 +143,12 @@ def stop_watchdog(stream_id, stream_name="", expected_stop=True):
     if process is not None:
         if process.poll() is None:
             process.terminate()
-            process.wait()
+            try:
+                process.wait(timeout=5)  # Wait up to 5 seconds
+            except subprocess.TimeoutExpired:
+                print(f"⚠️ FFmpeg process {stream_id} did not terminate in time. Forcing stop.")
+                process.kill()  # Forcefully kill the process
+                process.wait()  # Ensure cleanup
     watchdog_speeds.pop(stream_id, None)
     buffer_start_times.pop(stream_id, None)
     action_triggered.discard(stream_id)
@@ -326,6 +331,8 @@ def monitor_streams():
                 else:
                     # Remove watchdog_speed if stream_id is no longer a running process
                     watchdog_speeds.pop(stream_id)
+        except Exception as e:
+            print(f"❌ Error in monitoring streams: {e}")
         except KeyboardInterrupt:
             print("Interrupted by user. Cleaning up...")
             for stream_id in list(watchdog_processes):
@@ -359,3 +366,4 @@ def monitor_ffmpeg_memory(watchdog_processes, max_memory_mb=150):
 if __name__ == "__main__":
     print(f"Starting Stream Watchdog version: {get_version()}...")
     startup()
+    print(f"Stream Watchdog has stopped.")
