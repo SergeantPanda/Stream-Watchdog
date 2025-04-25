@@ -1,6 +1,6 @@
-# Stream Master Watchdog
+# Stream Watchdog
 
-Stream Master Watchdog is a Python script designed to monitor streams in the StreamMaster application. It ensures uninterrupted streaming by detecting buffering issues and automatically switching to the next stream if buffering persists for a configurable period.
+Stream Watchdog is a Python script designed to monitor streams in the StreamMaster application. It ensures uninterrupted streaming by detecting buffering issues and automatically switching to the next stream if buffering persists for a configurable period.
 
 ## Features
 - Monitors streams for buffering issues in real-time.
@@ -19,8 +19,8 @@ Stream Master Watchdog is a Python script designed to monitor streams in the Str
 ## Installation
 1. Clone this repository:
    ```bash
-   git clone https://github.com/SergeantPanda/StreamMaster-Watchdog.git
-   cd StreamMaster-Watchdog
+   git clone https://github.com/SergeantPanda/Stream-Watchdog.git
+   cd Stream-Watchdog
    ```
 2. Install required Python dependencies:
    ```bash
@@ -37,7 +37,7 @@ Update the following variables in the script to match your environment:
 - `PASSWORD`: # Password you use to login to the web ui. (Default: `none`)
 - `USER_AGENT`: Identifier used for the watchdog client. (Default: `Buffer Watchdog`)
 - `QUERY_INTERVAL`: Interval (in seconds) to query the API for stream updates. Setting this faster will not speed up buffer detection. (Default: `5`)
-- `BUFFER_SPEED_THRESHOLD`: Speed threshold to detect buffering. (Default: `1.0`) 
+- `BUFFER_SPEED_THRESHOLD`: Speed threshold to detect buffering. (Default: `1.0`)
 - `BUFFER_TIME_THRESHOLD`: Time (in seconds) to wait before switching streams when buffering. (Default: `30`)
 - `BUFFER_EXTENSION_TIME`: Time (in seconds) to add to the buffer timeout after switching streams. (Default: `10`)
 - `ERROR_THRESHOLD`: Number of errors before switching. (Default: `0` (disables error checking))
@@ -63,9 +63,9 @@ You can deploy Stream Master Watchdog using Docker Compose for easier setup and 
 ```yaml
 version: "3.8"
 services:
-  streammasterwatchdog:
-    image: sergeantpanda/streammasterwatchdog:latest
-    container_name: StreamMasterWatchdog
+  streamwatchdog:
+    image: sergeantpanda/streamwatchdog:latest
+    container_name: StreamWatchdog
     environment:
       - SERVER_URL=http://STREAMMASTER:7095
       - USERNAME= # Optional - Only needed if using authentication
@@ -134,5 +134,3 @@ Contributions are welcome! Feel free to submit issues or pull requests to improv
 ## License
 This project is licensed under the GNU General Public License v3.0. See the [LICENSE](./LICENSE) file for details.
 
-## Acknowledgments
-Special thanks to the Stream Master developer Senex for providing a robust API to enhance streaming experiences.
