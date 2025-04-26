@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# This file is part of Stream Master Watchdog.
+# This file is part of Stream Watchdog.
 #
-# Stream Master Watchdog is free software: you can redistribute it and/or modify
+# Stream Watchdog is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Stream Master Watchdog is distributed in the hope that it will be useful,
+# Stream Watchdog is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Stream Master Watchdog. If not, see <https://www.gnu.org/licenses/>.
+# along with Stream Watchdog. If not, see <https://www.gnu.org/licenses/>.
 
 import requests
 
@@ -82,14 +82,14 @@ def get_running_streams(dispatcharr_url, USERNAME=None, PASSWORD=None):
         channels = data.get("channels", [])
         for channel in channels:
             channel_id = channel.get("channel_id")
-            channel_name = channel.get("owner", "Unknown Channel")  # Use "owner" as the name
+            stream_name = channel.get("stream_name", "Unknown Name")
             if channel_id:
-                watchdog_names[channel_id] = channel_name  # Store name by channel ID
+                watchdog_names[channel_id] = stream_name  # Store name by channel ID
 
         return [
             {
                 "id": channel.get("channel_id"),
-                "name": channel.get("owner", "Unknown Channel"),
+                "name": channel.get("stream_name", "Unknown Name"),
                 "clients": [
                     client.get("user_agent", "")
                     for client in channel.get("clients", [])
