@@ -365,6 +365,5 @@ def monitor_ffmpeg_memory(watchdog_processes, max_memory_mb=150):
 
 if __name__ == "__main__":
     print(f"Starting Stream Watchdog version: {get_version()}...")
-    print(f"Please switch to updated container repository to continue receiving updates.")
     startup()
     print(f"Stream Watchdog has stopped.")

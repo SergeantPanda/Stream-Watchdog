@@ -124,8 +124,10 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            sergeantpanda/streamwatchdog:latest
             sergeantpanda/streamwatchdog:v${{ steps.new_version.outputs.new_version }}
+            sergeantpanda/streamwatchdog:latest
+            sergeantpanda/streammasterwatchdog:v${{ steps.new_version.outputs.new_version }}
+            sergeantpanda/streammasterwatchdog:latest
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
