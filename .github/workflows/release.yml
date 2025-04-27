@@ -12,6 +12,10 @@ on:
           - patch
           - minor
           - major
+# Add explicit permissions for the workflow
+permissions:
+  contents: write    # For managing releases and pushing tags
+  packages: write    # For publishing to GitHub Container Registry
 
 jobs:
   build-and-release:
