@@ -1,0 +1,133 @@
+name: Release Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Configure Git
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      - name: Read current version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(cat version.txt)
+          echo "Current version: $CURRENT_VERSION"
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          CURRENT_VERSION=${{ steps.current_version.outputs.current_version }}
+          RELEASE_TYPE=${{ github.event.inputs.release_type }}
+
+          # Split version into major, minor, patch
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          if [[ "$RELEASE_TYPE" == "major" ]]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [[ "$RELEASE_TYPE" == "minor" ]]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update version file
+        run: |
+          echo "${{ steps.new_version.outputs.new_version }}" > version.txt
+
+      - name: Commit version change
+        run: |
+          git add version.txt
+          git commit -m "Bump version to ${{ steps.new_version.outputs.new_version }}"
+
+      - name: Create tag
+        run: |
+          git tag -a v${{ steps.new_version.outputs.new_version }} -m "Release v${{ steps.new_version.outputs.new_version }}"
+
+      - name: Push changes and tags
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create DockerFile
+        run: |
+          cat > Dockerfile << 'EOF'
+          FROM python:3.8-slim
+          ENV PYTHONUNBUFFERED=1
+          RUN apt-get update && apt-get install -y \
+              ffmpeg \
+              curl \
+              inetutils-ping \
+              inetutils-traceroute \
+              && rm -rf /var/lib/apt/lists/*
+          WORKDIR /app
+          COPY LICENSE .
+          COPY version.txt .
+          COPY Stream-Watchdog.py .
+          COPY /Modules Modules/
+          RUN pip install --no-cache-dir requests psutil
+          CMD ["python", "Stream-Watchdog.py"]
+          EOF
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            sergeantpanda/streamwatchdog:latest
+            sergeantpanda/streamwatchdog:v${{ steps.new_version.outputs.new_version }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release v${{ steps.new_version.outputs.new_version }}
+          tag_name: v${{ steps.new_version.outputs.new_version }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

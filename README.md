@@ -108,7 +108,6 @@ Channel ID: 102 - Current Speed: 1.0x - Movie Channel
 Channel ID: 103 - Current Speed: 1.1x - News Channel (New Stream)
 Buffering resolved on channel 103 - News Channel.
 ```
-
 ## Contributing
 Contributions are welcome! Feel free to submit issues or pull requests to improve this script.
 
