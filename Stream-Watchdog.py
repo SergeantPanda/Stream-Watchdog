@@ -37,7 +37,7 @@ ERROR_RESET_TIME = int(os.getenv("ERROR_RESET_TIME", 20)) # Default 20 seconds
 CUSTOM_COMMAND = os.getenv("CUSTOM_COMMAND", "") # Default is no command
 CUSTOM_COMMAND_TIMEOUT = int(os.getenv("CUSTOM_COMMAND_TIMEOUT", 10))  # Default to 10 seconds
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg") # Default to "/usr/bin/ffmpeg"
-MODULE = os.getenv("MODULE", "Stream_Master") # Default to "Stream_Master"
+MODULE = os.getenv("MODULE", "Dispatcharr") # Default to "Dispatcharr"
 
 
 # Maintain running processes, speeds, and buffering timers with stream names

@@ -79,7 +79,7 @@ services:
       - CUSTOM_COMMAND=  # Optional - Don't use quotes around entire command
       - CUSTOM_COMMAND_TIMEOUT=10 # Optional
       - FFMPEG_PATH=/usr/bin/ffmpeg # Optional - Don't change unless you know what you're doing
-      - MODULE=Stream_Master # Optional
+      - MODULE=Dispatcharr # Optional
       - TZ=US/Central # Optional
     restart: unless-stopped
     logging:
