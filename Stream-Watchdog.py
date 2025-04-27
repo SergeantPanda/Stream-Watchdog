@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# This file is part of Stream Master Watchdog.
+# This file is part of Stream Watchdog.
 #
-# Stream Master Watchdog is free software: you can redistribute it and/or modify
+# Stream Watchdog is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Stream Master Watchdog is distributed in the hope that it will be useful,
+# Stream Watchdog is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Stream Master Watchdog. If not, see <https://www.gnu.org/licenses/>.
+# along with Stream Watchdog. If not, see <https://www.gnu.org/licenses/>.
 
 import subprocess
 import re
@@ -62,7 +62,7 @@ def startup():
         # Dynamically access the desired functions and variables
         get_running_streams = getattr(module, "get_running_streams")
         send_next_stream = getattr(module, "send_next_stream")
-        stream_url_template = getattr(module, "stream_url_template")  
+        stream_url_template = getattr(module, "stream_url_template")
         print(f"Successfully imported functions from {module_path}")
     except ModuleNotFoundError:
         raise Exception(f"Error: Module '{module_path}' not found. Ensure the MODULE environment variable is set correctly.")
@@ -91,9 +91,9 @@ def get_version():
     except Exception as e:
         print(f"Unable to access version file! Error: {e}")
         return "Unknown"
-    
 
-    
+
+
 def start_watchdog(stream_id, stream_name):
     """Start the FFmpeg watchdog process for a given stream ID."""
     global watchdog_names
@@ -102,7 +102,7 @@ def start_watchdog(stream_id, stream_name):
         ffmpeg_args = [
             FFMPEG_PATH,
             "-hide_banner",
-            "-user_agent", USER_AGENT,  
+            "-user_agent", USER_AGENT,
             "-fflags", "+nobuffer+discardcorrupt",
             "-flags", "low_delay",
             "-rtbufsize", "10M",
@@ -117,7 +117,7 @@ def start_watchdog(stream_id, stream_name):
         ffmpeg_args = [
             FFMPEG_PATH,
             "-hide_banner",
-            "-user_agent", USER_AGENT,  
+            "-user_agent", USER_AGENT,
             "-fflags", "+nobuffer+discardcorrupt",
             "-flags", "low_delay",
             "-rtbufsize", "10M",
@@ -202,7 +202,7 @@ def monitor_ffmpeg_output(stream_id, process):
 
                         # Calculate how long buffering has persisted
                         buffering_duration = time.time() - buffer_start_times[stream_id]
-                        
+
                         # If buffering persists beyond the defined threshold, consider switching
                         if buffering_duration >= BUFFER_TIME_THRESHOLD:
                             # Ensure we don’t switch too frequently
@@ -213,7 +213,7 @@ def monitor_ffmpeg_output(stream_id, process):
                                 if stream_switched:
                                     stream_buffering_duration = time.time() - last_switch_time
                                 else:
-                                    stream_buffering_duration = buffering_duration                               
+                                    stream_buffering_duration = buffering_duration
                                 print(f"⏳ Buffering persisted on channel {stream_id} ({stream_name}) for {stream_buffering_duration:.2f} seconds (total buffering time: {buffering_duration:.2f} seconds).")
                                 # Run custom command if enabled
                                 if CUSTOM_COMMAND:
@@ -234,9 +234,9 @@ def monitor_ffmpeg_output(stream_id, process):
                             del buffer_start_times[stream_id]
                             stream_name = watchdog_names.get(stream_id, "Unknown Stream")
                             print(f"✅ Buffering resolved for channel {stream_name}.")
-                        
+
                         # Allow future switches when buffering is no longer an issue
-                        stream_switched = False  
+                        stream_switched = False
                         last_switch_time = 0  # Reset switch cooldown
 
                 # Check for FFmpeg errors if enabled
@@ -276,7 +276,7 @@ def monitor_ffmpeg_output(stream_id, process):
                                     stream_switched = True
                                     last_switch_time = current_time  # Update last switch time
                                     stream_name = watchdog_names.get(stream_id, "Unknown Stream")
-                                    error_count = 0               
+                                    error_count = 0
                                     print(f"✅ Switched stream for channel {stream_id} - {stream_name}.")
                                 else:
                                     print(f"❌ Failed to switch channel {stream_id}.")
@@ -349,7 +349,7 @@ def monitor_ffmpeg_memory(watchdog_processes, max_memory_mb=150):
         if process.poll() is None:  # Process is still running
             try:
                 mem_usage = psutil.Process(process.pid).memory_info().rss / (1024 * 1024)  # Convert bytes to MB
-                
+
                 if mem_usage > max_memory_mb:
                     print(f"⚠️ FFmpeg process {stream_id} exceeded {max_memory_mb:.2f}MB! Restarting...")
                     process.kill()  # Kill the process
@@ -358,12 +358,13 @@ def monitor_ffmpeg_memory(watchdog_processes, max_memory_mb=150):
                     stream_name = watchdog_names.get(stream_id, "Unknown Stream")
                     stop_watchdog(stream_id, stream_name)
                     start_watchdog(stream_id, stream_name)  # Restart
-                    
+
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue  # Process might have already exited
 
 
 if __name__ == "__main__":
     print(f"Starting Stream Watchdog version: {get_version()}...")
+    print(f"Please switch to updated container repository to continue receiving updates.")
     startup()
     print(f"Stream Watchdog has stopped.")

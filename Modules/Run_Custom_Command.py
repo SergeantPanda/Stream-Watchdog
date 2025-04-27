@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# This file is part of Stream Master Watchdog.
+# This file is part of Stream Watchdog.
 #
-# Stream Master Watchdog is free software: you can redistribute it and/or modify
+# Stream Watchdog is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Stream Master Watchdog is distributed in the hope that it will be useful,
+# Stream Watchdog is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Stream Master Watchdog. If not, see <https://www.gnu.org/licenses/>.
+# along with Stream Watchdog. If not, see <https://www.gnu.org/licenses/>.
 
 import subprocess
 import time

@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# This file is part of Stream Master Watchdog.
+# This file is part of Stream Watchdog.
 #
-# Stream Master Watchdog is free software: you can redistribute it and/or modify
+# Stream Watchdog is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Stream Master Watchdog is distributed in the hope that it will be useful,
+# Stream Watchdog is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Stream Master Watchdog. If not, see <https://www.gnu.org/licenses/>.
+# along with Stream Watchdog. If not, see <https://www.gnu.org/licenses/>.
 
 import requests
 
@@ -45,13 +45,13 @@ def login(stream_master_url, USERNAME, PASSWORD):
             print(f"Failed to log in, please verify username and password!")
             return None
         else:
-            print(f"Successfully logged in!")        
-    
+            print(f"Successfully logged in!")
+
     return session
 
 def get_running_streams(stream_master_url, USERNAME = None, PASSWORD= None):
     """Fetch current running streams from the API."""
-    global session   
+    global session
     watchdog_names = {}  # Store stream names
     headers = {"Accept": "application/json"}
     try:
@@ -74,20 +74,20 @@ def get_running_streams(stream_master_url, USERNAME = None, PASSWORD= None):
             # Stop processing response and return empty
             return [],{}
         streams = response.json()
-        
+
         # Update the watchdog_names dictionary with stream names
         for stream in streams:
             stream_id = stream.get("id") or stream.get("Id")
             stream_name = stream.get("name") or stream.get("Name", "Unknown Channel")
             if stream_id:
                 watchdog_names[stream_id] = stream_name  # Store name by stream ID
-        
+
         return [
             {
                 "id": stream.get("id") or stream.get("Id"),  # Handle both "id" and "Id"
                 "name": stream.get("name") or stream.get("Name", "Unknown Channel"),  # Handle both "name" and "Name"
                 "clients": [
-                    client.get("clientUserAgent") or client.get("ClientUserAgent", "") 
+                    client.get("clientUserAgent") or client.get("ClientUserAgent", "")
                     for client in stream.get("clientStreams") or stream.get("ClientStreams", [])
                 ],
             }
@@ -97,7 +97,7 @@ def get_running_streams(stream_master_url, USERNAME = None, PASSWORD= None):
         print(f"Error fetching streams: {e}")
         session = None
         return [], {}  # Return empty structures on failure
-    
+
 def send_next_stream(stream_id, stream_master_url, USERNAME = None, PASSWORD = None):
     """Handle the buffering event by switching to the next stream."""
     try:
@@ -124,12 +124,12 @@ def send_next_stream(stream_id, stream_master_url, USERNAME = None, PASSWORD = N
     except Exception as e:
         print(f"Error switching to the next stream for channel {stream_id}: {e}")
         return False
-   
+
 if __name__ == "__main__":
     import os
     # Print USERNAME and PASSWORD being attempted
     print(f"The following credentials will be attempted for the login: USERNAME: '{os.getenv('USERNAME')}' PASSWORD: '{os.getenv('PASSWORD')}'")
-    # Print cookies during test.   
+    # Print cookies during test.
     print(f"Cookie returned after login attempt:")
     print(f"{login(os.getenv('SERVER_URL'), os.getenv('USERNAME'), os.getenv('PASSWORD')).cookies}")
     # Print get_running_streams return

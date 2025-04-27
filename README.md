@@ -32,7 +32,7 @@ Stream Watchdog is a Python script designed to monitor streams in the StreamMast
 ## Configuration
 Update the following variables in the script to match your environment:
 
-- `SERVER_URL`: Base URL of your StreamMaster server (e.g., `http://StreamMaster:7095`).
+- `SERVER_URL`: Base URL of your server (e.g., `http://Dispatcharr:9191`).
 - `USERNAME`: # Username you use to login to the web ui. (Default: `none`)
 - `PASSWORD`: # Password you use to login to the web ui. (Default: `none`)
 - `USER_AGENT`: Identifier used for the watchdog client. (Default: `Buffer Watchdog`)
@@ -46,7 +46,7 @@ Update the following variables in the script to match your environment:
 - `CUSTOM_COMMAND`: Command that will run when buffering persists and a next stream is sent. (Default: `no command provided`)
 - `CUSTOM_COMMAND_TIMEOUT`: Time (in seconds) to wait for a command before terminating it. (Default:`10`)
 - `FFMPEG_PATH`: Path to your `ffmpeg` executable.
-- `MODULE`: Module name to use. (Default: `Stream_Master`) (Accepted Values: `Stream_Master`,`AIPTV`)
+- `MODULE`: Module name to use. (Default: `Dispatcharr`) (Accepted Values: `Dispatcharr`,`Stream_Master`,`AIPTV`)
 
 ## Usage
 1. Start the script:
@@ -59,7 +59,7 @@ Update the following variables in the script to match your environment:
    - Switch to the next stream if buffering persists.
 
 ## Docker Compose Example
-You can deploy Stream Master Watchdog using Docker Compose for easier setup and management.
+You can deploy Stream Watchdog using Docker Compose for easier setup and management.
 ```yaml
 version: "3.8"
 services:
@@ -67,7 +67,7 @@ services:
     image: sergeantpanda/streamwatchdog:latest
     container_name: StreamWatchdog
     environment:
-      - SERVER_URL=http://STREAMMASTER:7095
+      - SERVER_URL=http://Dispatcharr:9191
       - USERNAME= # Optional - Only needed if using authentication
       - PASSWORD= # Optional - Only needed if using authentication
       - QUERY_INTERVAL=5 # Optional
@@ -88,25 +88,6 @@ services:
          max-size: "10m"
          max-file: "3"
 ```
-
-## API Integration
-The script uses the following StreamMaster APIs:
-
-### Get Channel Metrics
-- Endpoint: `/api/statistics/getchannelmetrics`
-- Method: `GET`
-- Purpose: Fetches the current active streams and client details.
-
-### Move to Next Stream
-- Endpoint: `/api/streaming/movetonextstream`
-- Method: `PATCH`
-- Payload:
-  ```json
-  {
-    "SMChannelId": <stream_id>
-  }
-  ```
-- Purpose: Commands StreamMaster to switch to the next stream.
 
 ## Example Output
 ```
