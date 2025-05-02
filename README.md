@@ -1,6 +1,6 @@
 # Stream Watchdog
 
-Stream Watchdog is a Python script designed to monitor streams in the StreamMaster application. It ensures uninterrupted streaming by detecting buffering issues and automatically switching to the next stream if buffering persists for a configurable period.
+Stream Watchdog is a Python script designed to monitor streams in IPTV Proxy applications. It ensures uninterrupted streaming by detecting buffering issues and automatically switching to the next stream if buffering persists for a configurable period.
 
 ## Features
 - Monitors streams for buffering issues in real-time.
