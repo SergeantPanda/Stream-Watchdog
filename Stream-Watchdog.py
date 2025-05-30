@@ -38,6 +38,7 @@ CUSTOM_COMMAND = os.getenv("CUSTOM_COMMAND", "") # Default is no command
 CUSTOM_COMMAND_TIMEOUT = int(os.getenv("CUSTOM_COMMAND_TIMEOUT", 10))  # Default to 10 seconds
 FFMPEG_PATH = os.getenv("FFMPEG_PATH", "/usr/bin/ffmpeg") # Default to "/usr/bin/ffmpeg"
 MODULE = os.getenv("MODULE", "Dispatcharr") # Default to "Dispatcharr"
+MAX_FFMPEG_MEMORY_MB = int(os.getenv("MAX_FFMPEG_MEMORY_MB", 150))  # Default to 150 MB
 
 
 # Maintain running processes, speeds, and buffering timers with stream names
@@ -343,7 +344,7 @@ def monitor_streams():
         # Monitor the current watchdog ffmpeg processes for high memory usage
         Thread(target=monitor_ffmpeg_memory, args=(watchdog_processes,), daemon=True).start()
 
-def monitor_ffmpeg_memory(watchdog_processes, max_memory_mb=150):
+def monitor_ffmpeg_memory(watchdog_processes, max_memory_mb=MAX_FFMPEG_MEMORY_MB):
     """Monitor all FFmpeg processes and restart them if memory usage exceeds max_memory_mb."""
     for stream_id, process in list(watchdog_processes.items()):
         if process.poll() is None:  # Process is still running
