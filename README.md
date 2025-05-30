@@ -46,6 +46,7 @@ Update the following variables in the script to match your environment:
 - `CUSTOM_COMMAND`: Command that will run when buffering persists and a next stream is sent. (Default: `no command provided`)
 - `CUSTOM_COMMAND_TIMEOUT`: Time (in seconds) to wait for a command before terminating it. (Default:`10`)
 - `FFMPEG_PATH`: Path to your `ffmpeg` executable.
+- `MAX_FFMPEG_MEMORY_MB`: Max amount of memory (in MB) each FFmpeg process is allowed to consume before force restarting it. (Default: `150`)
 - `MODULE`: Module name to use. (Default: `Dispatcharr`) (Accepted Values: `Dispatcharr`,`Stream_Master`,`AIPTV`)
 
 ## Usage
@@ -79,6 +80,7 @@ services:
       - CUSTOM_COMMAND=  # Optional - Don't use quotes around entire command
       - CUSTOM_COMMAND_TIMEOUT=10 # Optional
       - FFMPEG_PATH=/usr/bin/ffmpeg # Optional - Don't change unless you know what you're doing
+      - MAX_FFMPEG_MEMORY_MB=150 # Optional
       - MODULE=Dispatcharr # Optional
       - TZ=US/Central # Optional
     restart: unless-stopped
