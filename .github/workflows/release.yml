@@ -100,7 +100,7 @@ jobs:
       - name: Create DockerFile
         run: |
           cat > Dockerfile << 'EOF'
-          FROM python:3.8-slim
+          FROM python:3.13-slim
           ENV PYTHONUNBUFFERED=1
           RUN apt-get update && apt-get install -y \
               ffmpeg \
@@ -123,6 +123,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             sergeantpanda/streamwatchdog:v${{ steps.new_version.outputs.new_version }}
             sergeantpanda/streamwatchdog:latest
