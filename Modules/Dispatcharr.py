@@ -15,14 +15,17 @@
 # along with Stream Watchdog. If not, see <https://www.gnu.org/licenses/>.
 
 import requests
+import time
 
 session = None
+refresh_token = None
+token_expiry = 0  # Track when token will expire
 
 def stream_url_template(SERVER_URL):
     return f"{SERVER_URL}/proxy/ts/stream/{{id}}"
 
 def login(dispatcharr_url, USERNAME, PASSWORD):
-    global session
+    global session, refresh_token, token_expiry
     if session is None:
         session = requests.Session()
         if USERNAME is None:
@@ -39,6 +42,8 @@ def login(dispatcharr_url, USERNAME, PASSWORD):
                 print(f"Successfully logged in!")
                 tokens = response.json()
                 session.headers.update({"Authorization": f"Bearer {tokens['access']}"})  # Add access token to headers
+                refresh_token = tokens.get('refresh')  # Store refresh token
+                token_expiry = time.time() + 1800  # Set expiry to 30 minutes from now
             elif response.status_code == 400:
                 print(f"Invalid credentials provided!")
                 return None
@@ -54,14 +59,54 @@ def login(dispatcharr_url, USERNAME, PASSWORD):
 
     return session
 
+def refresh_access_token(dispatcharr_url):
+    """Refresh the access token using the refresh token."""
+    global session, refresh_token, token_expiry
+
+    if not refresh_token:
+        print("No refresh token available. Need to login again.")
+        return False
+
+    refresh_url = f"{dispatcharr_url}/api/accounts/token/refresh/"
+    payload = {"refresh": refresh_token}
+
+    try:
+        # Use a new session for this request to avoid using expired headers
+        temp_session = requests.Session()
+        response = temp_session.post(refresh_url, json=payload)
+
+        if response.status_code == 200:
+            tokens = response.json()
+            session.headers.update({"Authorization": f"Bearer {tokens['access']}"})
+            # Update refresh token if a new one is provided
+            if 'refresh' in tokens:
+                refresh_token = tokens['refresh']
+            token_expiry = time.time() + 1800  # Reset expiry time
+            print("Access token refreshed successfully")
+            return True
+        else:
+            print(f"Failed to refresh token: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"Error refreshing token: {e}")
+        return False
+
 def get_running_streams(dispatcharr_url, USERNAME=None, PASSWORD=None):
     """Fetch current running streams from the API."""
-    global session
+    global session, token_expiry
     watchdog_names = {}  # Store stream names
     headers = {"Accept": "application/json"}
     try:
         CHANNEL_METRICS_API_URL = f"{dispatcharr_url}/proxy/ts/status"
-        session = login(dispatcharr_url, USERNAME, PASSWORD)
+
+        # Check if we have a session and if we need to refresh the token
+        if session is None:
+            session = login(dispatcharr_url, USERNAME, PASSWORD)
+        elif time.time() > token_expiry - 60:  # Refresh 1 minute before expiry
+            if not refresh_access_token(dispatcharr_url):
+                # If refresh fails, try to login again
+                session = login(dispatcharr_url, USERNAME, PASSWORD)
+
         # Check if session was returned indicating login is successful or not needed
         if session is None:
             # Connection error return empty response to not crash watchdog
@@ -71,6 +116,21 @@ def get_running_streams(dispatcharr_url, USERNAME=None, PASSWORD=None):
         merged_headers = {**session.headers, **headers}
 
         response = session.get(CHANNEL_METRICS_API_URL, headers=merged_headers)
+
+        # Handle potential token expiration
+        if response.status_code == 401:
+            print("Token appears expired. Attempting refresh...")
+            if refresh_access_token(dispatcharr_url):
+                # Retry the request with refreshed token
+                merged_headers = {**session.headers, **headers}
+                response = session.get(CHANNEL_METRICS_API_URL, headers=merged_headers)
+            else:
+                # If refresh failed, try logging in again
+                session = login(dispatcharr_url, USERNAME, PASSWORD)
+                if session is not None:
+                    merged_headers = {**session.headers, **headers}
+                    response = session.get(CHANNEL_METRICS_API_URL, headers=merged_headers)
+
         response.raise_for_status()
         # Ensure the response status code is 200
         if response.status_code != 200:
@@ -104,11 +164,23 @@ def get_running_streams(dispatcharr_url, USERNAME=None, PASSWORD=None):
 
 def send_next_stream(channel_id, dispatcharr_url, USERNAME = None, PASSWORD = None):
     """Handle the buffering event by switching to the next stream."""
+    global session, token_expiry
     try:
         NEXT_STREAM_API_URL = f"{dispatcharr_url}/proxy/ts/next_stream/{channel_id}"
         print(f"Url to switch stream: {NEXT_STREAM_API_URL}")
-        # Trigger the next stream switch
-        session = login(dispatcharr_url, USERNAME, PASSWORD)
+
+        # Check if we have a session and if we need to refresh the token
+        if session is None:
+            session = login(dispatcharr_url, USERNAME, PASSWORD)
+        elif time.time() > token_expiry - 60:  # Refresh 1 minute before expiry
+            if not refresh_access_token(dispatcharr_url):
+                # If refresh fails, try to login again
+                session = login(dispatcharr_url, USERNAME, PASSWORD)
+
+        # Check if session was returned indicating login is successful
+        if session is None:
+            return False
+
         response = session.post(
             NEXT_STREAM_API_URL,
             headers={
@@ -116,6 +188,31 @@ def send_next_stream(channel_id, dispatcharr_url, USERNAME = None, PASSWORD = No
                 "Content-Type": "application/json",
             },
         )
+
+        # Handle potential token expiration
+        if response.status_code == 401:
+            print("Token appears expired. Attempting refresh...")
+            if refresh_access_token(dispatcharr_url):
+                # Retry the request with refreshed token
+                response = session.post(
+                    NEXT_STREAM_API_URL,
+                    headers={
+                        "accept": "application/json",
+                        "Content-Type": "application/json",
+                    },
+                )
+            else:
+                # If refresh failed, try logging in again
+                session = login(dispatcharr_url, USERNAME, PASSWORD)
+                if session is not None:
+                    response = session.post(
+                        NEXT_STREAM_API_URL,
+                        headers={
+                            "accept": "application/json",
+                            "Content-Type": "application/json",
+                        },
+                    )
+
         response.raise_for_status()
         result = response.json()  # Parse the JSON response
         # Log the result of switching the stream
